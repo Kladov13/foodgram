@@ -1,7 +1,7 @@
 # build env
 FROM node:18
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json package-lock.json ./
 RUN npm install -g npm@6
 RUN npm install react-scripts@5.0.1
 COPY . ./
