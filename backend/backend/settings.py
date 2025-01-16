@@ -17,7 +17,6 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -33,6 +32,7 @@ AUTH_USER_MODEL = 'users.User'
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1',
+    'https://taski2.duckdns.org'
 ]
 
 INSTALLED_APPS = [
@@ -136,7 +136,7 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = 'http://localhost:8000/media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
