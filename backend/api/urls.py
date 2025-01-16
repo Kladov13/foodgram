@@ -15,6 +15,7 @@ api_v1.register('recipes', RecipeViewSet, basename='recipe')
 api_v1.register('tags', TagViewSet, basename='tag')
 api_v1.register('users', UserViewSet, basename='users')
 
+
 urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
