@@ -121,3 +121,4 @@ class UserViewSet(djoser_views.UserViewSet):
             return Response(
                 {'errors': SUBSCRIBE_DELETE_ERROR_MESSAGE},
                 status=status.HTTP_400_BAD_REQUEST)
+
