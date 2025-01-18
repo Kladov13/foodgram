@@ -18,6 +18,10 @@ services:
     volumes:
       - static:/app/static
       - media:/app/media
+    command: >
+      sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py load_ingridients data/ingredients.json && python manage.py load_tags data/tags.json && gunicorn --bind 0.0.0.0:8000 backend.wsgi"
+    depends_on:
+      - db
 
   frontend:
     env_file: .env
@@ -34,3 +38,5 @@ services:
       - media:/mediafiles
     ports:
       - 8000:80
+    depends_on:
+      - backend
