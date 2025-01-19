@@ -2,23 +2,23 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    IngredientViewSet, RecipeViewSet, TagViewSet, UserViewSet,
-    RecipeRedirectView
+    IngredientViewSet, RecipeViewSet, TagViewSet, UserViewSet
 )
+from recipes.controllers import recipe_redirect
+
 
 app_name = 'api'
 
-api_v1 = DefaultRouter()
+api = DefaultRouter()
 
-api_v1.register('ingredients', IngredientViewSet, basename='ingredient')
-api_v1.register('recipes', RecipeViewSet, basename='recipe')
-api_v1.register('tags', TagViewSet, basename='tag')
-api_v1.register('users', UserViewSet, basename='users')
+api.register('ingredients', IngredientViewSet, basename='ingredient')
+api.register('recipes', RecipeViewSet, basename='recipe')
+api.register('tags', TagViewSet, basename='tag')
+api.register('users', UserViewSet, basename='users')
 
 
 urlpatterns = [
-    path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('', include(api_v1.urls)),
-    path('<str:short_link>/', RecipeRedirectView.as_view(), name='recipe-redirect'),
+    path('', include(api.urls)),
+    path('<str:short_link>/', recipe_redirect, name='recipe-redirect'),
 ]

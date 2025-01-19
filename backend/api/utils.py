@@ -4,9 +4,10 @@ from uuid import uuid4
 
 from django.core.files.base import ContentFile
 from django.http import HttpResponse
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from api.constants import MAX_LENGTH_SHORT_LINK
+from recipes.constants import MAX_LENGTH_SHORT_LINK
 
 
 class Base64ImageField(serializers.ImageField):
