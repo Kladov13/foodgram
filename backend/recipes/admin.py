@@ -12,6 +12,7 @@ class CustomUserChangeForm(UserChangeForm):
         model = User
         fields = '__all__'
 
+
 class UserAdmin(BaseUserAdmin):
     # Список полей для отображения в списке пользователей
     list_display = ('username', 'email', 'first_name', 'last_name',
@@ -52,6 +53,7 @@ class UserAdmin(BaseUserAdmin):
                 'username', 'email', 'first_name', 'last_name',
                 'password', 'is_active', 'is_staff', 'is_superuser')
         return super().get_form(request, obj, **kwargs)
+
 
 # Регистрируем модель пользователя в админке UserAdmin
 admin.site.register(User, UserAdmin)
@@ -128,7 +130,7 @@ class RecipeAdmin(admin.ModelAdmin):
                     ('medium', f'''Быстрее {thresholds[1]} мин
                                 ({qs.filter(cooking_time__range=(
                                     thresholds[0], thresholds[1])).count(
-                                    )})'''),
+                                )})'''),
                     ('long', f'''Дольше {thresholds[1]} мин
                                 ({qs.filter(cooking_time__gt=thresholds[1]).count(
                                 )})'''),

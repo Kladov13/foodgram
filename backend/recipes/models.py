@@ -24,7 +24,7 @@ class User(AbstractUser):
             regex=r'^[\w.@+-]+$',
             message=(
                 'Логин может содержать только буквы, цифры и символы @/./+/-/_'
-                ))])
+            ))])
     email = models.EmailField(
                             max_length=EMAIL_MAX_LENGTH,
                             unique=True,
@@ -155,7 +155,7 @@ class Recipe(models.Model):
             MaxValueValidator(
                     COOKING_TIME_MAX_VALUE,
                     message=COOKING_TIME_ERROR_MESSAGE)
-            ]
+        ]
     )
 
     class Meta:
