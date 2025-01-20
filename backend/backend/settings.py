@@ -35,6 +35,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://taski2.duckdns.org'
 ]
 
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
