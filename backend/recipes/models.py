@@ -25,10 +25,9 @@ class User(AbstractUser):
             message=(
                 'Логин может содержать только буквы, цифры и символы @/./+/-/_'
             ))])
-    email = models.EmailField(
-                        max_length=EMAIL_MAX_LENGTH,
-                        unique=True,
-                        verbose_name='Электронная почта')
+    email = models.EmailField(max_length=EMAIL_MAX_LENGTH,
+                              unique=True,
+                              verbose_name='Электронная почта')
     first_name = models.CharField('Имя', max_length=FIO_MAX_FIELD_LENGTH)
     last_name = models.CharField('Фамилия', max_length=FIO_MAX_FIELD_LENGTH)
 

@@ -30,7 +30,8 @@ def create_report_of_shopping_list(user, ingredients, recipes):
 
     shopping_list_ingredients = '\n'.join([
         f'{i+1}. {ingredient["ingredient__name"].capitalize()} '
-        f'({ingredient["ingredient__measurement_unit"]}) - {ingredient["amount"]}'
+        f'({ingredient["ingredient__measurement_unit"]}) - '
+        f'{ingredient["amount"]}'
         for i, ingredient in enumerate(ingredients)
     ])
 
