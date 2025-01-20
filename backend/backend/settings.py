@@ -171,4 +171,4 @@ DJOSER = {
     }
 }
 
-HOST = os.getenv('HOST')
+HOST = 'taski2.duckdns.org'
