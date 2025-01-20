@@ -1,9 +1,16 @@
+import os
+
 from django.db.models import Sum
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
-from rest_framework import status, viewsets
+from django.shortcuts import get_object_or_404
+from djoser import views as DjoserViewSet
+from djoser.permissions import CurrentUserOrAdmin
+from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status, viewsets
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly
@@ -12,46 +19,32 @@ from rest_framework.response import Response
 
 from recipes.constants import (
     UNEXIST_RECIPE_CREATE_ERROR, DUPLICATE_OF_RECIPE_ADD_CART,
-    UNEXIST_SHOPPING_CART_ERROR
+    UNEXIST_SHOPPING_CART_ERROR,
+    CHANGE_AVATAR_ERROR_MESSAGE, SUBSCRIBE_ERROR_MESSAGE,
+    SUBSCRIBE_DELETE_ERROR_MESSAGE, SUBSCRIBE_SELF_ERROR_MESSAGE
 
 )
 from .filters import RecipeFilter, IngredientFilter
 from recipes.models import (
     Ingredient, Favorite, Recipe, RecipeIngredients,
-    ShoppingCart, Tag
+    ShoppingCart, Tag, Subscription, User
+
 )
 from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
     ShortRecipeSerializer,
     TagSerializer,
+    SubscriberSerializer,
+    AvatarSerializer,
+    SubscriptionEditSerializer,
+    UserSerializer
 )
 from .permissions import (
     IsAuthor
 )
 from .utils import create_report_of_shopping_list
-
-from django.shortcuts import get_object_or_404
-from djoser import views as DjoserViewSet
-from djoser.permissions import CurrentUserOrAdmin
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-
-from recipes.constants import (
-    CHANGE_AVATAR_ERROR_MESSAGE, SUBSCRIBE_ERROR_MESSAGE,
-    SUBSCRIBE_DELETE_ERROR_MESSAGE, SUBSCRIBE_SELF_ERROR_MESSAGE
-)
-from recipes.models import Subscription, User
-from .serializers import (
-    AvatarSerializer,
-    SubscriberSerializer,
-    SubscriptionEditSerializer,
-    UserSerializer
-)
 from .pagination import PageLimitPagination
-from recipes.controllers import recipe_redirect
 
 
 class UserViewSet(DjoserViewSet.UserViewSet):
@@ -87,8 +80,17 @@ class UserViewSet(DjoserViewSet.UserViewSet):
     def change_avatar(self, request, *args, **kwargs):
         """Метод для управления аватаром."""
         if request.method == 'DELETE':
-            self.request.user.avatar = None
-            self.request.user.save()
+            avatar = self.request.user.avatar
+            if avatar:
+                # Удаление файла с диска
+                avatar_path = avatar.path
+                if os.path.exists(avatar_path):
+                    os.remove(avatar_path)
+
+                # Удаление ссылки на аватар в базе данных
+                self.request.user.avatar = None
+                self.request.user.save()
+
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if 'avatar' not in request.data:
@@ -96,17 +98,18 @@ class UserViewSet(DjoserViewSet.UserViewSet):
                 {'avatar': CHANGE_AVATAR_ERROR_MESSAGE},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         serializer = AvatarSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         avatar_data = serializer.validated_data.get('avatar')
-        request.user.avatar = avatar_data
-        request.user.save()
-        image_url = request.build_absolute_uri(
-            f'/media/users/{avatar_data.name}'
-        )
-        return Response(
-            {'avatar': str(image_url)}, status=status.HTTP_200_OK
-        )
+        self.request.user.avatar = avatar_data
+        self.request.user.save()
+
+        image_url = request.build_absolute_uri( 
+            f'/media/users/{avatar_data.name}')
+        return Response( 
+            {'avatar': str(image_url)}, status=status.HTTP_200_OK 
+        ) 
 
     @action(['GET'], detail=False, url_path='subscriptions')
     def subscriptions(self, request):
@@ -182,7 +185,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     pagination_class = None
 
-from rest_framework.exceptions import NotFound
+
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для Рецептов."""
 
@@ -196,7 +199,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         if user.is_authenticated:
-            queryset = queryset.prefetch_related('favorites', 'shopping_cart')
+            queryset = queryset.prefetch_related('favorites', 'shopping_carts')
         return queryset
 
     def get_permissions(self):
@@ -209,23 +212,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для создания рецепта."""
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['GET'], url_path='get-link')
+    @action(detail=True, methods=['GET'], url_path='get-link', url_name='get-link')
     def get_short_link(self, request, pk):
-        try: 
-            recipe = self.get_object() 
-        except Recipe.DoesNotExist: 
-            return Response( 
-                {'message': UNEXIST_RECIPE_CREATE_ERROR}, 
-                status=status.HTTP_404_NOT_FOUND 
-            ) 
- 
-        scheme = request.scheme 
-        host = request.get_host() 
-        domain = f'{scheme}://{host}' 
-        return Response( 
-            {'short-link': f'{domain}/s/{recipe.short_link}'}, 
-            status=status.HTTP_200_OK 
-        )
+        if not Recipe.objects.filter(id=pk).exists():
+            raise ValidationError(
+                {'status':
+                 f'Рецепт с ID {pk} не найден'})
+        short_link = f'{request.build_absolute_uri("/")[:-1]}/{str(pk)}/'
+        return JsonResponse({'short-link': short_link})
 
     @action(detail=True, methods=['POST', 'DELETE'])
     def shopping_cart(self, request, pk):
@@ -270,23 +264,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
-
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):
         """Метод для скачивания списка покупок."""
         user = request.user
-        if not user.shopping_cart.exists():
+        if not user.shopping_carts.exists():
             return Response(
                 {'errors': UNEXIST_SHOPPING_CART_ERROR},
                 status=status.HTTP_400_BAD_REQUEST)
         ingredients = RecipeIngredients.objects.filter(
-            recipe__shopping_cart__user=user
+            recipe__shopping_carts__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount')).order_by('ingredient__name')
-        return create_report_of_shopping_list(user, ingredients)
-
-
-
+        recipes = Recipe.objects.filter(shopping_carts__user=user)
+        return create_report_of_shopping_list(user, ingredients, recipes)

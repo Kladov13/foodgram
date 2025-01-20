@@ -1,13 +1,9 @@
 import base64
 from datetime import datetime
-from uuid import uuid4
 
 from django.core.files.base import ContentFile
-from django.http import HttpResponse
-from drf_extra_fields.fields import Base64ImageField
+from django.http import FileResponse
 from rest_framework import serializers
-
-from recipes.constants import MAX_LENGTH_SHORT_LINK
 
 
 class Base64ImageField(serializers.ImageField):
@@ -22,27 +18,44 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-def generate_short_link():
-    """Функция для генерации короткой ссылки."""
-    return uuid4().hex[:MAX_LENGTH_SHORT_LINK]
-
-
-def create_report_of_shopping_list(user, ingredients):
+def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
+
     today = datetime.today()
-    shopping_list = (
+
+    shopping_list_header = (
         f'Список покупок для: {user.get_full_name()}\n\n'
         f'Дата: {today:%Y-%m-%d}\n\n'
     )
-    shopping_list += '\n'.join([
-        f'- {ingredient["ingredient__name"]} '
-        f'({ingredient["ingredient__measurement_unit"]})'
-        f' - {ingredient["amount"]}'
-        for ingredient in ingredients
+
+    shopping_list_ingredients = '\n'.join([
+        f'{i+1}. {ingredient["ingredient__name"].capitalize()} '
+        f'({ingredient["ingredient__measurement_unit"]}) - {ingredient["amount"]}'
+        for i, ingredient in enumerate(ingredients)
     ])
-    shopping_list += f'\n\nFoodgram ({today:%Y})'
+
+    shopping_list_recipes = '\n'.join([
+        f'{recipe.name}'
+        for recipe in recipes
+    ])
+
+    shopping_list = '\n'.join([
+        shopping_list_header,
+        'Продукты:',
+        shopping_list_ingredients,
+        'Рецепты:',
+        shopping_list_recipes,
+        f'\n\nFoodgram ({today:%Y})'
+    ])
 
     filename = f'{user.username}_shopping_list.txt'
-    response = HttpResponse(shopping_list, content_type='text/plain')
-    response['Content-Disposition'] = f'attachment; filename={filename}'
+
+    # Включение FileResponse, чтобы корректно отправить файл
+    response = FileResponse(
+        shopping_list.encode('utf-8'),
+        as_attachment=True,
+        filename=filename,
+        content_type='text/plain'
+    )
+
     return response

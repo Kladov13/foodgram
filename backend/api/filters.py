@@ -49,5 +49,5 @@ class RecipeFilter(filters.FilterSet):
     def filter_is_in_shopping_cart(self, recipes_queryset, name, value):
         user = self.request.user
         if value and user.is_authenticated:
-            return recipes_queryset.filter(shopping_cart__user=user)
+            return recipes_queryset.filter(shopping_carts__user=user)
         return recipes_queryset

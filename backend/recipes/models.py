@@ -11,12 +11,11 @@ from .constants import (
     AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE, MAX_LENGTH_SHORT_LINK,
     COOKING_TIME_MAX_VALUE, EMAIL_MAX_LENGTH, FIO_MAX_FIELD_LENGTH
 )
-from api.utils import generate_short_link
 
 
 class User(AbstractUser):
     """Кастомный класс для модели User."""
-    
+
     username = models.CharField(
         'Никнейм',
         max_length=FIO_MAX_FIELD_LENGTH,
@@ -127,7 +126,7 @@ class Recipe(models.Model):
     """Модель для рецептов."""
 
     tags = models.ManyToManyField(
-        Tag, through='RecipeTags', verbose_name='Тэги'
+        Tag, verbose_name='Тэги'
     )
     author = models.ForeignKey(
         User, verbose_name='Автор', on_delete=models.CASCADE
@@ -157,13 +156,6 @@ class Recipe(models.Model):
                     message=COOKING_TIME_ERROR_MESSAGE)
         ]
     )
-    short_link = models.CharField(
-        verbose_name='Короткая ссылка', default=generate_short_link,
-        max_length=MAX_LENGTH_SHORT_LINK
-    )
-
-    def get_absolute_url(self) -> str:
-        return f'/recipes/{self.pk}/'
 
     class Meta:
         default_related_name = 'recipes'
@@ -173,22 +165,6 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class RecipeTags(models.Model):
-    """Промежуточная модель для связи моделей Рецетов и Тэгов."""
-
-    recipe = models.ForeignKey(
-        Recipe, verbose_name='Рецепт', on_delete=models.CASCADE
-    )
-    tag = models.ForeignKey(
-        Tag, verbose_name='Тег', on_delete=models.CASCADE
-    )
-
-    class Meta:
-        default_related_name = 'recipe_tags'
-        verbose_name = 'Тег рецепта'
-        verbose_name_plural = 'Теги рецептов'
 
 
 class RecipeIngredients(models.Model):
@@ -240,7 +216,7 @@ class ShoppingCart(BaseUserRecipe):
     """Модель для списка покупок."""
 
     class Meta:
-        default_related_name = 'shopping_cart'
+        default_related_name = 'shopping_carts'
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
 

@@ -1,56 +1,51 @@
 from django.db import transaction
 from django.core.validators import MinValueValidator, MaxValueValidator
+from djoser.serializers import UserSerializer as DjoserUserSerializer
+from rest_framework import serializers
 from rest_framework import serializers
 
 from recipes.constants import (
     AMOUNT_OF_INGREDIENT_CREATE_ERROR, AMOUNT_OF_TAG_CREATE_ERROR,
-    DUPLICATE_OF_INGREDIENT_CREATE_ERROR, DUPLICATE_OF_TAG_CREATE_ERROR,
     AMOUNT_ERROR_MESSAGE_MAX, AMOUNT_ERROR_MESSAGE_MIN,
-    AMOUNT_MAX, AMOUNT_MIN
+    AMOUNT_MAX, AMOUNT_MIN, RECIPES_LIMIT
 )
 from recipes.models import (
     Ingredient,
     Recipe,
     RecipeIngredients,
-    Tag
+    Tag, Recipe, User, Subscription
 )
-
 from .utils import Base64ImageField
-from djoser.serializers import UserSerializer as DjoserUserSerializer
-from rest_framework import serializers
-
-from recipes.models import Recipe, User, Subscription
 from recipes.constants import RECIPES_LIMIT
 
 
 class CurrentUserSerializer(DjoserUserSerializer):
     """Сериалайзер под текущего пользователя."""
 
+    avatar = Base64ImageField(required=False, allow_null=True)
     is_subscribed = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta(DjoserUserSerializer.Meta):
         model = User
         fields = (
-            'id',
-            'email',
-            'username',
-            'first_name',
-            'last_name',
+            *DjoserUserSerializer.Meta.fields,
             'avatar',
             'is_subscribed',
         )
+        read_only_fields = ('id', 'avatar', 'is_subscribed')
 
-    def get_is_subscribed(self, subscription):
-        return False
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        return request.user.followers.filter(followed=obj).exists()
 
 
 class UserSerializer(CurrentUserSerializer):
     """Общий сериалайзер для пользователя."""
 
     def get_is_subscribed(self, obj): 
-        request = self.context['request'] 
-        return Subscription.objects.filter(follower_id=request.user.id,
-                                           followed_id=obj.id).exists()
+        return False
 
 
 class AvatarSerializer(serializers.Serializer):
@@ -67,50 +62,18 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class SubscriberSerializer(serializers.ModelSerializer):
+class SubscriberSerializer(CurrentUserSerializer):
     """Сериалайзер для подписчиков. Только для чтения."""
 
-    is_subscribed = serializers.SerializerMethodField(
-        method_name='get_is_subscribed')
     recipes = serializers.SerializerMethodField(method_name='get_recipes')
     recipes_count = serializers.IntegerField(source='recipes.count')
 
-    class Meta:
+    class Meta(CurrentUserSerializer.Meta):
         model = User
         fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count', 'avatar'
+            *CurrentUserSerializer.Meta.fields, 'recipes', 'recipes_count'
         )
         read_only_fields = fields
-
-    def get_is_subscribed(self, obj):
-        """
-        Метод для проверки - является ли текущий пользователь
-        подписчиком указанного пользователя.
-        :param obj: объект указанного пользователя.
-        :return: возвращает булевое значение, в зависимости от подписки.
-        """
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            follower=request.user, followed=obj
-        ).exists()
-
-
-    def get_is_subscribed(self, obj): 
-        """ 
-        Метод для проверки - является ли текущий пользователь 
-        подписчиком указанного пользователя. 
-        :param obj: объект указанного пользователя. 
-        :return: возвращает булевое значение, в зависимости от подписки. 
-        """ 
-        request = self.context.get('request') 
-        if request is None or request.user.is_anonymous: 
-            return False 
-        return Subscription.objects.filter( 
-            follower=request.user, followed=obj 
-        ).exists() 
 
 
     def get_recipes(self, recipe):
@@ -217,7 +180,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def find_duplicates(self, items, item_name):
-        """Метод для поиска дублей в списке и генерации ошибки с отображением дублирующихся элементов."""
+        """Метод для поиска дублей в списке и генерации ошибки."""
         seen = set()
         duplicates = []
         for item in items:
@@ -226,33 +189,32 @@ class RecipeSerializer(serializers.ModelSerializer):
                 duplicates.append(item_id)
             else:
                 seen.add(item_id)
-        
+
         if duplicates:
             raise serializers.ValidationError(
-                f"{item_name} {', '.join(map(str, duplicates))} are duplicates."
+                f"{item_name} {', '.join(map(str, duplicates))} дубликаты."
             )
 
     def validate(self, attrs):
         """Метод для валидации данных при создании рецепта."""
         ingredients = attrs.get('recipe_ingredients')
         tags = attrs.get('tags')
-        
+
         if not ingredients or not tags:
             raise serializers.ValidationError(
                 AMOUNT_OF_INGREDIENT_CREATE_ERROR
             )
-        
+
         if not tags:
             raise serializers.ValidationError(
                 AMOUNT_OF_TAG_CREATE_ERROR
             )
-        
+
         # Проверка дублей в ингредиентах и тегах
         self.find_duplicates(ingredients, "Ingredient")
         self.find_duplicates(tags, "Tag")
 
         return attrs
-
 
     def create_ingredients(self, recipe, ingredients):
         """Метод для создания ингредиентов для рецепта."""
@@ -264,18 +226,6 @@ class RecipeSerializer(serializers.ModelSerializer):
                     amount=ingredient['amount']
                 ) for ingredient in ingredients
             ])
-
-    def check_duplicate_ingredients(self, ingredients):
-        """Метод для проверки наличия дубликатов ингредиентов."""
-        existing_ingredients = set(
-            RecipeIngredients.objects.values_list('ingredient', flat=True)
-        )
-        for ingredient in ingredients:
-            base_ingredient = ingredient.get('id')
-            if base_ingredient in existing_ingredients:
-                raise serializers.ValidationError(
-                    {'errors': DUPLICATE_OF_INGREDIENT_CREATE_ERROR}
-                )
 
     @transaction.atomic()
     def create(self, validated_data):
@@ -290,7 +240,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Метод для обновления рецептов."""
         ingredients = validated_data.pop('recipe_ingredients')
-        self.check_duplicate_ingredients(ingredients)
         self.create_ingredients(instance, ingredients)
         super().update(instance, validated_data)
         return instance
@@ -314,7 +263,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return obj.shopping_cart.filter(user=request.user).exists()
+            return obj.shopping_carts.filter(user=request.user).exists()
         return False
 
 
@@ -325,17 +274,17 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
-class SubscriptionEditSerializer(serializers.ModelSerializer): 
-    """Сериалайзер для подписчиков. Только на запись.""" 
- 
-    followed = UserSerializer 
-    follower = UserSerializer 
- 
+class SubscriptionEditSerializer(serializers.ModelSerializer):
+    """Сериалайзер для подписчиков. Только на запись."""
+
+    followed = UserSerializer
+    follower = UserSerializer
+
     class Meta: 
-        model = Subscription 
-        fields = ('followed', 'follower') 
- 
-    def to_representation(self, instance): 
-        subscription = super().to_representation(instance) 
-        subscription = SubscriberSerializer(instance.follower).data 
-        return subscription 
+        model = Subscription
+        fields = ('followed', 'follower')
+
+    def to_representation(self, instance):
+        subscription = super().to_representation(instance)
+        subscription = SubscriberSerializer(instance.follower).data
+        return subscription

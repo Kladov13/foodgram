@@ -1,13 +1,11 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.forms import UserChangeForm
 from django.utils.safestring import mark_safe
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
-                     ShoppingCart, Tag)
+                     ShoppingCart, Tag, User)
 
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.forms import UserChangeForm
-from .models import User  # Импортируйте вашу модель пользователя
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
@@ -36,20 +34,23 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'email', 'first_name', 'last_name', 'is_staff', 'is_active'),
+            'fields': ('username', 'password1', 'password2',
+                       'email', 'first_name', 'last_name', 'is_staff', 'is_active'),
         }),
     )
 
-    # Используем нашу кастомную форму
+    # Используем кастомную форму
     form = CustomUserChangeForm
 
     # Позволяем редактировать пароль через админку
     def get_form(self, request, obj=None, **kwargs):
         if obj:  # Если это уже существующий объект
-            kwargs['fields'] = ('username', 'email', 'first_name', 'last_name', 'password', 'is_active', 'is_staff', 'is_superuser')
+            kwargs['fields'] = (
+                'username', 'email', 'first_name', 'last_name',
+                'password', 'is_active', 'is_staff', 'is_superuser')
         return super().get_form(request, obj, **kwargs)
 
-# Регистрируем модель пользователя в админке с нашим UserAdmin
+# Регистрируем модель пользователя в админке UserAdmin
 admin.site.register(User, UserAdmin)
 
 
@@ -115,10 +116,18 @@ class RecipeAdmin(admin.ModelAdmin):
 
             def lookups(self, request, model_admin):
                 return [
-                    ('fast', f'Быстрее {thresholds[0]} мин ({qs.filter(cooking_time__lt=thresholds[0]).count()})'),
-                    ('medium', f'Быстрее {thresholds[1]} мин ({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'),
-                    ('long', f'Дольше {thresholds[1]} мин ({qs.filter(cooking_time__gt=thresholds[1]).count()})'),
-                ]
+                    ('fast', f'''Быстрее {thresholds[0]} мин 
+                                ({qs.filter(cooking_time__lt=thresholds[0]).count(
+                                )})'''),
+                    ('medium', f'''Быстрее {thresholds[1]} мин 
+                                ({qs.filter(cooking_time__range=(
+                                    thresholds[0], thresholds[1])).count(
+                                    )})'''),
+                    ('long', f'''Дольше {thresholds[1]} мин 
+                                ({qs.filter(cooking_time__gt=thresholds[1]).count(
+                                )})'''),
+                    ]
+
 
             def queryset(self, request, queryset):
                 if self.value() == 'fast':
@@ -152,7 +161,11 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavouriteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recipe',)
+    list_display = ('user', 'recipe', 'get_favorite_status')
+
+    def get_favorite_status(self, fav):
+        return 'В избранном' if fav.favorite else 'Не в избранном'
+    get_favorite_status.short_description = 'Статус избранного'
 
 
 @admin.register(RecipeIngredients)

@@ -48,4 +48,4 @@ urllib3==2.2.3
 webencodings==0.5.1
 zopfli==0.2.3
 django-cors-headers==4.6.0
-drf-extra-fields>=2.0.0
+drf-extra-fields==3.7.0
