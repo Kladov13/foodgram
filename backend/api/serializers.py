@@ -2,7 +2,6 @@ from django.db import transaction
 from django.core.validators import MinValueValidator, MaxValueValidator
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
-from rest_framework import serializers
 
 from recipes.constants import (
     AMOUNT_OF_INGREDIENT_CREATE_ERROR, AMOUNT_OF_TAG_CREATE_ERROR,
@@ -10,13 +9,10 @@ from recipes.constants import (
     AMOUNT_MAX, AMOUNT_MIN, RECIPES_LIMIT
 )
 from recipes.models import (
-    Ingredient,
-    Recipe,
-    RecipeIngredients,
+    Ingredient, RecipeIngredients,
     Tag, Recipe, User, Subscription
 )
 from .utils import Base64ImageField
-from recipes.constants import RECIPES_LIMIT
 
 
 class CurrentUserSerializer(DjoserUserSerializer):
@@ -44,7 +40,7 @@ class CurrentUserSerializer(DjoserUserSerializer):
 class UserSerializer(CurrentUserSerializer):
     """Общий сериалайзер для пользователя."""
 
-    def get_is_subscribed(self, obj): 
+    def get_is_subscribed(self, obj):
         return False
 
 
@@ -74,7 +70,6 @@ class SubscriberSerializer(CurrentUserSerializer):
             *CurrentUserSerializer.Meta.fields, 'recipes', 'recipes_count'
         )
         read_only_fields = fields
-
 
     def get_recipes(self, recipe):
         """
@@ -107,6 +102,7 @@ class SubscriptionEditSerializer(serializers.ModelSerializer):
         subscription = super().to_representation(instance)
         subscription = SubscriberSerializer(instance.follower).data
         return subscription
+
 
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для Тэгов."""
@@ -273,18 +269,3 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
-
-class SubscriptionEditSerializer(serializers.ModelSerializer):
-    """Сериалайзер для подписчиков. Только на запись."""
-
-    followed = UserSerializer
-    follower = UserSerializer
-
-    class Meta: 
-        model = Subscription
-        fields = ('followed', 'follower')
-
-    def to_representation(self, instance):
-        subscription = super().to_representation(instance)
-        subscription = SubscriberSerializer(instance.follower).data
-        return subscription

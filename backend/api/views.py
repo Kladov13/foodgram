@@ -15,7 +15,6 @@ from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly
 )
-from rest_framework.response import Response
 
 from recipes.constants import (
     UNEXIST_RECIPE_CREATE_ERROR, DUPLICATE_OF_RECIPE_ADD_CART,
@@ -105,11 +104,11 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         self.request.user.avatar = avatar_data
         self.request.user.save()
 
-        image_url = request.build_absolute_uri( 
+        image_url = request.build_absolute_uri(
             f'/media/users/{avatar_data.name}')
-        return Response( 
-            {'avatar': str(image_url)}, status=status.HTTP_200_OK 
-        ) 
+        return Response(
+            {'avatar': str(image_url)}, status=status.HTTP_200_OK
+        )
 
     @action(['GET'], detail=False, url_path='subscriptions')
     def subscriptions(self, request):
@@ -212,7 +211,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для создания рецепта."""
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['GET'], url_path='get-link', url_name='get-link')
+    @action(detail=True,
+            methods=['GET'], url_path='get-link', url_name='get-link')
     def get_short_link(self, request, pk):
         if not Recipe.objects.filter(id=pk).exists():
             raise ValidationError(
@@ -239,8 +239,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Общий метод для добавления рецепта в список покупок или избранное"""
         recipe = get_object_or_404(Recipe, id=pk)
         obj, created = model.objects.get_or_create(
-            user=user, recipe=get_object_or_404(Recipe, id=pk)
-            )
+            user=user, recipe=get_object_or_404(Recipe, id=pk))
         if not created:
             return Response(
                 {'errors': DUPLICATE_OF_RECIPE_ADD_CART},

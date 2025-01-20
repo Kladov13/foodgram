@@ -14,7 +14,8 @@ class CustomUserChangeForm(UserChangeForm):
 
 class UserAdmin(BaseUserAdmin):
     # Список полей для отображения в списке пользователей
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'first_name', 'last_name',
+                    'is_staff', 'is_active')
 
     # Поли для поиска
     search_fields = ('username', 'email')
@@ -26,7 +27,8 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -35,7 +37,8 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'password1', 'password2',
-                       'email', 'first_name', 'last_name', 'is_staff', 'is_active'),
+                       'email', 'first_name', 'last_name', 'is_staff',
+                       'is_active'),
         }),
     )
 
@@ -83,13 +86,15 @@ class RecipeAdmin(admin.ModelAdmin):
     def display_ingredients(self, obj):
         """Отображает ингредиенты в виде списка."""
         ingredients = obj.ingredients.values_list('name', flat=True)
-        return mark_safe("<ul>" + "".join([f"<li>{ingredient}</li>" for ingredient in ingredients]) + "</ul>")
+        return mark_safe("<ul>" + "".join([
+            f"<li>{ingredient}</li>" for ingredient in ingredients]) + "</ul>")
     display_ingredients.short_description = "Ингредиенты"
 
     def display_image(self, obj):
         """Отображает изображение рецепта."""
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 100px;" />')
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="max-height: 100px;" />')
         return "Нет изображения"
     display_image.short_description = "Картинка"
 
@@ -106,7 +111,8 @@ class RecipeAdmin(admin.ModelAdmin):
         if times:
             min_time, max_time = min(times), max(times)
             bin_size = (max_time - min_time) // 3 or 1
-            thresholds = [min_time + bin_size, min_time + 2 * bin_size, max_time]
+            thresholds = [
+                min_time + bin_size, min_time + 2 * bin_size, max_time]
         else:
             thresholds = [10, 30, 60]  # Дефолтные пороги
 
@@ -116,14 +122,14 @@ class RecipeAdmin(admin.ModelAdmin):
 
             def lookups(self, request, model_admin):
                 return [
-                    ('fast', f'''Быстрее {thresholds[0]} мин 
+                    ('fast', f'''Быстрее {thresholds[0]} мин
                                 ({qs.filter(cooking_time__lt=thresholds[0]).count(
                                 )})'''),
-                    ('medium', f'''Быстрее {thresholds[1]} мин 
+                    ('medium', f'''Быстрее {thresholds[1]} мин
                                 ({qs.filter(cooking_time__range=(
                                     thresholds[0], thresholds[1])).count(
                                     )})'''),
-                    ('long', f'''Дольше {thresholds[1]} мин 
+                    ('long', f'''Дольше {thresholds[1]} мин
                                 ({qs.filter(cooking_time__gt=thresholds[1]).count(
                                 )})'''),
                     ]
@@ -133,7 +139,8 @@ class RecipeAdmin(admin.ModelAdmin):
                 if self.value() == 'fast':
                     return queryset.filter(cooking_time__lt=thresholds[0])
                 elif self.value() == 'medium':
-                    return queryset.filter(cooking_time__range=(thresholds[0], thresholds[1]))
+                    return queryset.filter(cooking_time__range=(thresholds[0],
+                                                                thresholds[1]))
                 elif self.value() == 'long':
                     return queryset.filter(cooking_time__gt=thresholds[1])
                 return queryset

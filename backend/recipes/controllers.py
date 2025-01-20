@@ -19,18 +19,23 @@ def manage_subscription(request, user_id):
     # В зависимости от метода (POST для подписки, DELETE для отписки)
     if request.method == 'POST':
         # Проверяем, не подписан ли уже пользователь
-        if Subscription.objects.filter(follower=user, followed=followed_user).exists():
-            return Response({"detail": "You are already subscribed."}, status=status.HTTP_400_BAD_REQUEST)
+        if Subscription.objects.filter(follower=user,
+                                       followed=followed_user).exists():
+            return Response({"detail": "You are already subscribed."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Создаем подписку
         Subscription.objects.create(follower=user, followed=followed_user)
-        return Response({"detail": "Successfully subscribed."}, status=status.HTTP_201_CREATED)
+        return Response({"detail": "Successfully subscribed."},
+                        status=status.HTTP_201_CREATED)
 
     elif request.method == 'DELETE':
         # Удаляем подписку
-        subscription = get_object_or_404(Subscription, follower=user, followed=followed_user)
+        subscription = get_object_or_404(Subscription, follower=user,
+                                         followed=followed_user)
         subscription.delete()
-        return Response({"detail": "Successfully unsubscribed."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "Successfully unsubscribed."},
+                        status=status.HTTP_204_NO_CONTENT)
 
 
 def recipe_redirect(request, short_link):

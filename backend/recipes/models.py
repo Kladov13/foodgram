@@ -8,7 +8,7 @@ from .constants import (
     INGREDIENT_UNIT_MAX_LENGTH, RECIPE_NAME_MAX_LENGTH,
     COOKING_TIME_MIN_VALUE, COOKING_TIME_ERROR_MESSAGE,
     AMOUNT_OF_INGREDIENT_MIN_VALUE,
-    AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE, MAX_LENGTH_SHORT_LINK,
+    AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE,
     COOKING_TIME_MAX_VALUE, EMAIL_MAX_LENGTH, FIO_MAX_FIELD_LENGTH
 )
 
@@ -26,9 +26,9 @@ class User(AbstractUser):
                 'Логин может содержать только буквы, цифры и символы @/./+/-/_'
                 ))])
     email = models.EmailField(
-                              max_length=EMAIL_MAX_LENGTH,
-                              unique=True,
-                              verbose_name='Электронная почта')
+                            max_length=EMAIL_MAX_LENGTH,
+                            unique=True,
+                            verbose_name='Электронная почта')
     first_name = models.CharField('Имя', max_length=FIO_MAX_FIELD_LENGTH)
     last_name = models.CharField('Фамилия', max_length=FIO_MAX_FIELD_LENGTH)
 
@@ -95,6 +95,7 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+
 class Ingredient(models.Model):
     """Модель для ингредиентов."""
 
@@ -154,7 +155,7 @@ class Recipe(models.Model):
             MaxValueValidator(
                     COOKING_TIME_MAX_VALUE,
                     message=COOKING_TIME_ERROR_MESSAGE)
-        ]
+            ]
     )
 
     class Meta:
