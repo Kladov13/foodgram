@@ -37,7 +37,7 @@ COOKING_TIME_ERROR_MESSAGE = (
 AMOUNT_OF_INGREDIENT_MIN_VALUE = 1
 # Константа для текста ошибки минимального кол-ва ингредиентов в рецепте.
 AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE = (
-    f'Кол-во ингредиентов не может быть меньше {AMOUNT_OF_INGREDIENT_MIN_VALUE}.'
+    f'Кол-во ингредиентов не меньше {AMOUNT_OF_INGREDIENT_MIN_VALUE}.'
 )
 # Константа минимального кол-ва ингредиентов или тэгов в  рецепте при создании.
 AMOUNT_OF_INGREDIENT_CREATE_ERROR = (

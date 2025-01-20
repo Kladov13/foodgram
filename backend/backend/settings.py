@@ -171,4 +171,4 @@ DJOSER = {
     }
 }
 
-HOST = os.getenv('HOST', 'localhost')
+HOST = os.getenv('HOST')

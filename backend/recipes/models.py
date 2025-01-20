@@ -26,9 +26,9 @@ class User(AbstractUser):
                 'Логин может содержать только буквы, цифры и символы @/./+/-/_'
             ))])
     email = models.EmailField(
-                            max_length=EMAIL_MAX_LENGTH,
-                            unique=True,
-                            verbose_name='Электронная почта')
+                        max_length=EMAIL_MAX_LENGTH,
+                        unique=True,
+                        verbose_name='Электронная почта')
     first_name = models.CharField('Имя', max_length=FIO_MAX_FIELD_LENGTH)
     last_name = models.CharField('Фамилия', max_length=FIO_MAX_FIELD_LENGTH)
 
@@ -153,8 +153,8 @@ class Recipe(models.Model):
                 COOKING_TIME_MIN_VALUE,
                 message=COOKING_TIME_ERROR_MESSAGE),
             MaxValueValidator(
-                    COOKING_TIME_MAX_VALUE,
-                    message=COOKING_TIME_ERROR_MESSAGE)
+                COOKING_TIME_MAX_VALUE,
+                message=COOKING_TIME_ERROR_MESSAGE)
         ]
     )
 

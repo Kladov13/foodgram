@@ -134,16 +134,15 @@ class RecipeAdmin(admin.ModelAdmin):
                     ('long', f'''Дольше {thresholds[1]} мин
                                 ({qs.filter(cooking_time__gt=thresholds[1]).count(
                                 )})'''),
-                    ]
-
+                ]
 
             def queryset(self, request, queryset):
                 if self.value() == 'fast':
                     return queryset.filter(cooking_time__lt=thresholds[0])
-                elif self.value() == 'medium':
+                if self.value() == 'medium':
                     return queryset.filter(cooking_time__range=(thresholds[0],
                                                                 thresholds[1]))
-                elif self.value() == 'long':
+                if self.value() == 'long':
                     return queryset.filter(cooking_time__gt=thresholds[1])
                 return queryset
 
