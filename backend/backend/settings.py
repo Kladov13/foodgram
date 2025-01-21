@@ -162,13 +162,11 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'SERIALIZERS': {
-        'user': 'api.serializers.UserSerializer',
-        'current_user': 'api.serializers.CurrentUserSerializer',
+        'user': 'api.serializers.BaseUserSerializer',
+        'current_user': 'api.serializers.BaseUserSerializer',
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
         'user': ['api.permissions.CurrentUserOrAdminOrReadOnly'],
     }
 }
-
-HOST = 'taski2.duckdns.org'

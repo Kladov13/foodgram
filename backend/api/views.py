@@ -1,8 +1,8 @@
 import os
-
+from django.urls import reverse
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from djoser import views as DjoserViewSet
@@ -12,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import (
     AllowAny,
-    IsAuthenticatedOrReadOnly
+    IsAuthenticatedOrReadOnly,
+    IsAuthenticated
 )
 
 from recipes.constants import (
@@ -31,12 +32,12 @@ from recipes.models import (
 from .serializers import (
     IngredientSerializer,
     RecipeSerializer,
-    ShortRecipeSerializer,
+    RecipeShortSerializer,
     TagSerializer,
-    SubscriberSerializer,
+    SubscriberReadSerializer,
     AvatarSerializer,
     SubscriptionEditSerializer,
-    UserSerializer
+    BaseUserSerializer
 )
 from .permissions import (
     IsAuthor
@@ -49,16 +50,13 @@ class UserViewSet(DjoserViewSet.UserViewSet):
     """Общий вьюсет для пользователя."""
 
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = BaseUserSerializer
     pagination_class = PageLimitPagination
 
     @action(
         ["get", "put", "patch", "delete"],
         detail=False,
     )
-    def me(self, request, *args, **kwargs):
-        """Метод для профиля."""
-        return super().me(request, *args, **kwargs)
 
     def get_permissions(self):
         """
@@ -66,8 +64,8 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         Переопределяется для изменения прав доступа в методе `me`.
         """
         if self.action == 'me':
-            # Разрешаем доступ только текущему пользователю или администратору
-            return [CurrentUserOrAdmin()]
+            # Разрешаем доступ всем аутентифицированным пользователям
+            return [IsAuthenticated()]
         return super().get_permissions()
 
     @action(
@@ -113,9 +111,9 @@ class UserViewSet(DjoserViewSet.UserViewSet):
     def subscriptions(self, request):
         """Метод для управления подписками пользователя."""
         user = request.user
-        queryset = User.objects.filter(followings__follower=user)
+        queryset = User.objects.filter(followers__subscriber=user)
         pages = self.paginate_queryset(queryset)
-        self.serializer_class = SubscriberSerializer
+        self.serializer_class = SubscriberReadSerializer
         serializer = self.get_serializer(
             pages,
             many=True,
@@ -134,7 +132,7 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         user = request.user
         author = get_object_or_404(User, id=id)
         serializer = SubscriptionEditSerializer(
-            data={'followed': author.id, 'follower': user.id}
+            data={'author': author.id, 'subscriber': user.id}
         )
         if request.method == 'POST':
             # Проверка подписки на самого себя.
@@ -144,7 +142,7 @@ class UserViewSet(DjoserViewSet.UserViewSet):
                     status=status.HTTP_400_BAD_REQUEST)
             # Проверка уже существующей подписки.
             if Subscription.objects.filter(
-                    followed=author, follower=user).exists():
+                    author=author, subscriber=user).exists():
                 return Response(
                     {'error': SUBSCRIBE_ERROR_MESSAGE},
                     status=status.HTTP_400_BAD_REQUEST)
@@ -155,9 +153,9 @@ class UserViewSet(DjoserViewSet.UserViewSet):
             )
 
         if Subscription.objects.filter(
-                followed=author, follower=user).exists():
+                author=author, subscriber=user).exists():
             subscription = Subscription.objects.get(
-                followed=author, follower=user)
+                author=author, subscriber=user)
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -244,7 +242,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'errors': DUPLICATE_OF_RECIPE_ADD_CART},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = ShortRecipeSerializer(recipe)
+        serializer = RecipeShortSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def common_delete_from(self, model, user, pk):
@@ -277,4 +275,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount')).order_by('ingredient__name')
         recipes = Recipe.objects.filter(shopping_carts__user=user)
-        return create_report_of_shopping_list(user, ingredients, recipes)
+        shopping_list = create_report_of_shopping_list(
+            user, ingredients, recipes)
+        # Формирование имени файла
+        filename = f'{user.username}_shopping_list.txt'
+        # Возвращаем файл для скачивания
+        return FileResponse(
+            shopping_list,
+            as_attachment=True,
+            filename=filename,
+            content_type='text/plain'
+        )

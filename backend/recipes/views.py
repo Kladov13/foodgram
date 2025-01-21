@@ -29,7 +29,7 @@ def manage_subscription(request, user_id):
         return Response({"detail": "Successfully subscribed."},
                         status=status.HTTP_201_CREATED)
 
-    elif request.method == 'DELETE':
+    if request.method == 'DELETE':
         # Удаляем подписку
         subscription = get_object_or_404(Subscription, follower=user,
                                          followed=followed_user)
@@ -41,3 +41,5 @@ def manage_subscription(request, user_id):
 def recipe_redirect(request, short_link):
     recipe = get_object_or_404(Recipe, short_link=short_link)
     return redirect(recipe.get_absolute_url())
+
+

@@ -22,41 +22,25 @@ def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
 
     today = datetime.today()
-
     shopping_list_header = (
-        f'Список покупок для: {user.get_full_name()}\n\n'
-        f'Дата: {today:%Y-%m-%d}\n\n'
+        'Список покупок для: {0}\n\n'
+        'Дата: {1:%Y-%m-%d}\n\n'.format(user.get_full_name(), today)
     )
-
-    shopping_list_ingredients = '\n'.join([
-        f'{i+1}. {ingredient["ingredient__name"].capitalize()} '
-        f'({ingredient["ingredient__measurement_unit"]}) - '
-        f'{ingredient["amount"]}'
-        for i, ingredient in enumerate(ingredients)
-    ])
-
-    shopping_list_recipes = '\n'.join([
-        f'{recipe.name}'
-        for recipe in recipes
-    ])
-
-    shopping_list = '\n'.join([
+    shopping_list_ingredients = '\n'.join(
+        '{0}. {1} ({2}) - {3}'.format(
+            i, ingredient["ingredient__name"].capitalize(),
+            ingredient["ingredient__measurement_unit"], ingredient["amount"])
+        for i, ingredient in enumerate(ingredients, start=1)
+    )
+    shopping_list_recipes = '\n'.join(
+        '{0}'.format(recipe.name) for recipe in recipes
+    )
+    shopping_list = '\n'.join([  # Перенос формирования отчета в вызывающий код
         shopping_list_header,
         'Продукты:',
         shopping_list_ingredients,
         'Рецепты:',
         shopping_list_recipes,
-        f'\n\nFoodgram ({today:%Y})'
+        '\n\nFoodgram'
     ])
-
-    filename = f'{user.username}_shopping_list.txt'
-
-    # Включение FileResponse, чтобы корректно отправить файл
-    response = FileResponse(
-        shopping_list.encode('utf-8'),
-        as_attachment=True,
-        filename=filename,
-        content_type='text/plain'
-    )
-
-    return response
+    return shopping_list
