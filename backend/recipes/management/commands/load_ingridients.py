@@ -37,26 +37,18 @@ class Command(BaseCommand):
         Читает JSON-файл, загружает данные и сохраняет их в базу данных.
         """
         file_path = kwargs['file_path']
-
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                data = json.load(file)
-
-            ingredients = [
-                Ingredient(
-                    name=item['name'],
-                    measurement_unit=item['measurement_unit']
+            with open(file_path, 'r', encoding='utf-8') as file:            
+                count = Ingredient.objects.bulk_create(
+                    [Ingredient(**item) for item in json.load(file)],
+                    ignore_conflicts=True
                 )
-                for item in data
-            ]
-            Ingredient.objects.bulk_create(
-                ingredients,
-                ignore_conflicts=True
-            )
-            self.stdout.write(
-                self.style.SUCCESS('Ингредиенты успешно загружены.')
+            self.stdout.write(self.style.SUCCESS(
+                    f'Ингредиенты успешно загружены. Добавлено {len(count)}.'
+                )
             )
         except Exception as e:
             self.stderr.write(
-                self.style.ERROR(f'Ошибка при загрузке ингредиентов: {e}')
+                self.style.ERROR(
+                    f'Ошибка при загрузке ингредиентов из "{file_path}": {e}')
             )

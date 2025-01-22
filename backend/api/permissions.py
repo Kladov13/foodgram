@@ -1,13 +1,4 @@
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from djoser.permissions import CurrentUserOrAdminOrReadOnly
-
-
-class CurrentUserOrAdminOrReadOnly(
-    IsAuthenticatedOrReadOnly,
-    CurrentUserOrAdminOrReadOnly
-):
-    pass
 
 
 class IsAuthor(IsAuthenticated):

@@ -1,8 +1,9 @@
 import os
+
 from django.urls import reverse
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse, FileResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from djoser import views as DjoserViewSet
@@ -10,10 +11,11 @@ from djoser.permissions import CurrentUserOrAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly,
-    IsAuthenticated
+    IsAuthenticated,
 )
 
 from recipes.constants import (
@@ -36,7 +38,6 @@ from .serializers import (
     TagSerializer,
     SubscriberReadSerializer,
     AvatarSerializer,
-    SubscriptionEditSerializer,
     BaseUserSerializer
 )
 from .permissions import (
@@ -44,6 +45,7 @@ from .permissions import (
 )
 from .utils import create_report_of_shopping_list
 from .pagination import PageLimitPagination
+
 
 
 class UserViewSet(DjoserViewSet.UserViewSet):
@@ -75,37 +77,30 @@ class UserViewSet(DjoserViewSet.UserViewSet):
     )
     def change_avatar(self, request, *args, **kwargs):
         """Метод для управления аватаром."""
+        user = self.request.user
         if request.method == 'DELETE':
-            avatar = self.request.user.avatar
-            if avatar:
+            if user.avatar:
                 # Удаление файла с диска
-                avatar_path = avatar.path
-                if os.path.exists(avatar_path):
-                    os.remove(avatar_path)
-
+                user.avatar.delete(save=True)
                 # Удаление ссылки на аватар в базе данных
                 self.request.user.avatar = None
                 self.request.user.save()
-
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if 'avatar' not in request.data:
-            return Response(
-                {'avatar': CHANGE_AVATAR_ERROR_MESSAGE},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'error': CHANGE_AVATAR_ERROR_MESSAGE})
 
         serializer = AvatarSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         avatar_data = serializer.validated_data.get('avatar')
-        self.request.user.avatar = avatar_data
-        self.request.user.save()
-
+        user.avatar = avatar_data
+        user.save()
         image_url = request.build_absolute_uri(
             f'/media/users/{avatar_data.name}')
         return Response(
             {'avatar': str(image_url)}, status=status.HTTP_200_OK
         )
+
 
     @action(['GET'], detail=False, url_path='subscriptions')
     def subscriptions(self, request):
@@ -121,46 +116,34 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(
-        detail=True,
-        methods=('POST', 'DELETE'),
-        url_path='subscribe',
-        url_name='subscribe',
-    )
+    @action(detail=True, methods=('POST', 'DELETE'), url_path='subscribe', url_name='subscribe')
     def subscribe(self, request, id):
-        """Метод для управления редактирования подписок."""
+        """Метод для управления подписками."""
         user = request.user
         author = get_object_or_404(User, id=id)
-        serializer = SubscriptionEditSerializer(
-            data={'author': author.id, 'subscriber': user.id}
-        )
-        if request.method == 'POST':
-            # Проверка подписки на самого себя.
-            if user == author:
-                return Response(
-                    {'error': SUBSCRIBE_SELF_ERROR_MESSAGE},
-                    status=status.HTTP_400_BAD_REQUEST)
-            # Проверка уже существующей подписки.
-            if Subscription.objects.filter(
-                    author=author, subscriber=user).exists():
-                return Response(
-                    {'error': SUBSCRIBE_ERROR_MESSAGE},
-                    status=status.HTTP_400_BAD_REQUEST)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED
-            )
+        # Проверка подписки на самого себя
+        if user == author:
+            raise ValidationError({'error': SUBSCRIBE_SELF_ERROR_MESSAGE})
 
-        if Subscription.objects.filter(
-                author=author, subscriber=user).exists():
-            subscription = Subscription.objects.get(
-                author=author, subscriber=user)
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': SUBSCRIBE_DELETE_ERROR_MESSAGE},
-            status=status.HTTP_400_BAD_REQUEST)
+        subscription_exists = Subscription.objects.filter(
+            author=author, subscriber=user)
+        if request.method == 'POST':
+            if subscription_exists.exists():
+                return Response(
+                    {'error': 'Вы уже подписаны на этого автора.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # Создание новой подписки
+            Subscription.objects.create(author=author, subscriber=user)
+            serializer = SubscriberReadSerializer(
+                author, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Логика удаления подписки
+        if subscription_exists.exists():
+            subscription_exists.delete()
+            return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
+        raise ValidationError({'error': SUBSCRIBE_ERROR_MESSAGE})
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -197,8 +180,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             queryset = queryset.prefetch_related('favorites', 'shopping_carts')
         return queryset
-
-    def get_permissions(self):
+    
+    def get_permissions(self): 
         """Метод для прав доступа, в зависимости от метода."""
         if self.request.method in ("PATCH", "DELETE"):
             self.permission_classes = [IsAuthor]
@@ -238,10 +221,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         obj, created = model.objects.get_or_create(
             user=user, recipe=get_object_or_404(Recipe, id=pk))
         if not created:
-            return Response(
-                {'errors': DUPLICATE_OF_RECIPE_ADD_CART},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'error': DUPLICATE_OF_RECIPE_ADD_CART})
         serializer = RecipeShortSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -254,10 +234,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(
-                {'errors': UNEXIST_RECIPE_CREATE_ERROR},
-                status=status.HTTP_400_BAD_REQUEST
+        raise ValidationError(
+                {'errors': UNEXIST_RECIPE_CREATE_ERROR}
             )
 
     @action(detail=False, methods=['GET'])
@@ -265,9 +243,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для скачивания списка покупок."""
         user = request.user
         if not user.shopping_carts.exists():
-            return Response(
-                {'errors': UNEXIST_SHOPPING_CART_ERROR},
-                status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'error': UNEXIST_SHOPPING_CART_ERROR})
         ingredients = RecipeIngredients.objects.filter(
             recipe__shopping_carts__user=user
         ).values(

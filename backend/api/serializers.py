@@ -84,22 +84,6 @@ class SubscriberReadSerializer(BaseUserSerializer):
                 recipe.recipes.all()[:RECIPES_LIMIT], many=True).data
 
 
-class SubscriptionEditSerializer(serializers.ModelSerializer):
-    """Сериалайзер для подписчиков. Только на запись."""
-
-    author = BaseUserSerializer
-    subscriber = BaseUserSerializer
-
-    class Meta:
-        model = Subscription
-        fields = ('author', 'subscriber')
-
-    def to_representation(self, instance):
-        subscription = super().to_representation(instance)
-        subscription = SubscriberReadSerializer(instance.subscriber).data
-        return subscription
-
-
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для Тэгов."""
 
