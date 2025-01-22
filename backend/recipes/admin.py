@@ -153,27 +153,27 @@ class CookingTimeFilter(admin.SimpleListFilter):
         if times:
             min_time, max_time = min(times), max(times)
             bin_size = (max_time - min_time) // 3 or 1
-            thresholds = [
+            thr = [
                 min_time + bin_size, min_time + 2 * bin_size, max_time
             ]
         else:
-            thresholds = [10, 30, 60]  # Дефолтные пороги
+            thr = [10, 30, 60]  # Дефолтные пороги
 
         return [
             (
                 'fast',
-                f'Быстрее {thresholds[0]} мин '
-                f'({qs.filter(cooking_time__lt=thresholds[0]).count()})',
+                f'Быстрее {thr[0]} мин '
+                f'({qs.filter(cooking_time__lt=thr[0]).count()})',
             ),
             (
                 'medium',
-                f'Быстрее {thresholds[1]} мин '
-                f'({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'
+                f'Быстрее {thr[1]} мин '
+                f'({qs.filter(cooking_time__range=(thr[0], thr[1])).count()})'
             ),
             (
                 'long',
-                f'Дольше {thresholds[1]} мин '
-                f'({qs.filter(cooking_time__gt=thresholds[1]).count()})',
+                f'Дольше {thr[1]} мин '
+                f'({qs.filter(cooking_time__gt=thr[1]).count()})',
             ),
         ]
 
