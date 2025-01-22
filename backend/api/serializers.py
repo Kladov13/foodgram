@@ -186,9 +186,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create_ingredients(self, recipe, ingredients):
         """Метод для создания ингредиентов для рецепта."""
         RecipeIngredients.objects.bulk_create(RecipeIngredients(
-                    recipe=recipe,
-                    ingredient=ingredient['id'],
-                    amount=ingredient['amount']
+                recipe=recipe,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
         ) for ingredient in ingredients)
 
     @transaction.atomic()

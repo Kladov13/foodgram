@@ -160,15 +160,21 @@ class CookingTimeFilter(admin.SimpleListFilter):
             thresholds = [10, 30, 60]  # Дефолтные пороги
 
         return [
-           (
-            'fast', f'Быстрее {thresholds[0]} мин '
-                    f'({qs.filter(cooking_time__lt=thresholds[0]).count()})'),
             (
-            'medium', f'Быстрее {thresholds[1]} мин '
-                      f'({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'),
+                'fast',
+                f'Быстрее {thresholds[0]} мин '
+                f'({qs.filter(cooking_time__lt=thresholds[0]).count()})',
+            ),
             (
-            'long', f'Дольше {thresholds[1]} мин '
-                    f'({qs.filter(cooking_time__gt=thresholds[1]).count()})'),
+                'medium',
+                f'Быстрее {thresholds[1]} мин '
+                f'({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'
+            ),
+            (
+                'long',
+                f'Дольше {thresholds[1]} мин '
+                f'({qs.filter(cooking_time__gt=thresholds[1]).count()})',
+            ),
         ]
 
     def queryset(self, request, queryset):
@@ -238,19 +244,6 @@ class RecipeAdmin(admin.ModelAdmin):
     def added_in_favorites(self, obj):
         """Возвращает количество добавлений рецепта в избранное."""
         return obj.favorite_set.count()
-
-    def get_list_filter(self, request):
-        """Добавляем фильтр по времени готовки с динамическими порогами."""
-        qs = self.get_queryset(request)
-        times = qs.values_list('cooking_time', flat=True)
-
-        if times:
-            min_time, max_time = min(times), max(times)
-            bin_size = (max_time - min_time) // 3 or 1
-            thresholds = [
-                min_time + bin_size, min_time + 2 * bin_size, max_time]
-        else:
-            thresholds = [10, 30, 60]  # Дефолтные пороги
 
 
 @admin.register(Ingredient)

@@ -237,7 +237,6 @@ class ShoppingCart(BaseUserRecipe):
         verbose_name_plural = 'Списки покупок'
 
 
-
 class Favorite(BaseUserRecipe):
     """Модель для Избранных рецептов."""
 
