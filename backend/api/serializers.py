@@ -1,7 +1,7 @@
 from collections import Counter
 
 from django.db import transaction
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
 
@@ -191,7 +191,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                     ingredient=ingredient['id'],
                     amount=ingredient['amount']
                 ) for ingredient in ingredients
-            )
+        )
 
     @transaction.atomic()
     def create(self, validated_data):

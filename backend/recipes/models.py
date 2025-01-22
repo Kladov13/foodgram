@@ -159,7 +159,7 @@ class Recipe(models.Model):
         validators=[
             MinValueValidator(
                 COOKING_TIME_MIN_VALUE,
-                )
+            )
         ]
     )
 
@@ -187,7 +187,7 @@ class RecipeIngredients(models.Model):
         validators=[
             MinValueValidator(
                 AMOUNT_OF_INGREDIENT_MIN_VALUE,
-                )
+            )
         ]
     )
 
@@ -207,11 +207,11 @@ class BaseUserRecipe(models.Model):
         Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
     )
 
-    class Meta: 
+    class Meta:
         abstract = True
         # Уникальность пары (пользователь + рецепт)
-        constraints = [ 
-            models.UniqueConstraint( 
+        constraints = [
+            models.UniqueConstraint(
                 fields=['user', 'recipe'], name='unique_user_recipe'
             )
         ]
@@ -220,8 +220,7 @@ class BaseUserRecipe(models.Model):
         verbose_name_plural = 'Рецепты пользователей'
 
     def __str__(self):
-        return f'{self.user} добавил {self.recipe} в {self._meta.verbose_name}.'
-
+        return f'{self.user} добавил {self.recipe} в {self._meta.verbose_name}'
 
 
 class ShoppingCart(BaseUserRecipe):
@@ -239,7 +238,7 @@ class ShoppingCart(BaseUserRecipe):
 
 
 
-class Favorite(BaseUserRecipe): 
+class Favorite(BaseUserRecipe):
     """Модель для Избранных рецептов."""
 
     class Meta(BaseUserRecipe.Meta):

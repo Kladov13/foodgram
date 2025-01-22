@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.utils.safestring import mark_safe
-from django.urls import reverse
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
                      ShoppingCart, Tag, User)
@@ -18,6 +17,7 @@ class RelatedObjectFilter(admin.SimpleListFilter):
     Фильтр для проверки наличия связанных объектов.
     Рецепты, подписки, подписчики.
     """
+
     parameter_name = ''
     related_field_name = ''
 
@@ -72,10 +72,10 @@ class UserAdmin(BaseUserAdmin):
 
     # Настроенные поля для отображения и редактирования в админке
     fieldsets = (
-        (None, {'fields': ('username', 'password')}), 
-        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}), 
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
-                                    'groups', 'user_permissions')}), 
+                                    'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -83,7 +83,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'email', 
+            'fields': ('username', 'password1', 'password2', 'email',
                        'first_name', 'last_name', 'is_staff', 'is_active'),
         }),
     )
@@ -106,8 +106,9 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description='Аватар')
     @mark_safe
     def avatar(self, obj):
-        return (f'<img src="{obj.avatar.url}" style="max-height: 50px; '
-                f'max-width: 50px;" />' if obj.avatar else "<i>Нет изображения</i>")
+        return (
+            f'<img src="{obj.avatar.url}" style="max-height: 50px; '
+            f'max-width: 50px;" />' if obj.avatar else "<i>Нет картинки</i>")
 
     @admin.display(description='Число рецептов')
     def recipe_count(self, obj):
@@ -158,12 +159,15 @@ class CookingTimeFilter(admin.SimpleListFilter):
             thresholds = [10, 30, 60]  # Дефолтные пороги
 
         return [
-            ('fast', f'Быстрее {thresholds[0]} мин '
-                     f'({qs.filter(cooking_time__lt=thresholds[0]).count()})'),
-            ('medium', f'Быстрее {thresholds[1]} мин '
-                       f'({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'),
-            ('long', f'Дольше {thresholds[1]} мин '
-                     f'({qs.filter(cooking_time__gt=thresholds[1]).count()})'),
+        (
+            'fast', f'Быстрее {thresholds[0]} мин '
+                    f'({qs.filter(cooking_time__lt=thresholds[0]).count()})'),
+            (
+            'medium', f'Быстрее {thresholds[1]} мин '
+                      f'({qs.filter(cooking_time__range=(thresholds[0], thresholds[1])).count()})'),
+            (
+            'long', f'Дольше {thresholds[1]} мин '
+                    f'({qs.filter(cooking_time__gt=thresholds[1]).count()})'),
         ]
 
     def queryset(self, request, queryset):
@@ -260,17 +264,15 @@ class IngredientAdmin(admin.ModelAdmin):
         return obj.recipe_set.count()
 
 
-
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'recipe_count') 
+    list_display = ('name', 'slug', 'recipe_count')
     search_fields = ('name', 'slug')
 
     @admin.display(description='Число рецептов')
     def recipe_count(self, obj):
         """Показывает количество рецептов, с этим тегом."""
         return obj.recipe_set.count()
-
 
 
 @admin.register(ShoppingCart, Favorite)

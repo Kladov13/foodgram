@@ -38,15 +38,14 @@ class Command(BaseCommand):
         """
         file_path = kwargs['file_path']
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:            
+            with open(file_path, 'r', encoding='utf-8') as file:
                 count = Ingredient.objects.bulk_create(
                     [Ingredient(**item) for item in json.load(file)],
                     ignore_conflicts=True
                 )
             self.stdout.write(self.style.SUCCESS(
-                    f'Ингредиенты успешно загружены. Добавлено {len(count)}.'
-                )
-            )
+                f'Ингредиенты успешно загружены. Добавлено {len(count)}.'
+            ))
         except Exception as e:
             self.stderr.write(
                 self.style.ERROR(

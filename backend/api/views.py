@@ -1,15 +1,12 @@
-from django.urls import reverse
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from djoser import views as DjoserViewSet
-from djoser.permissions import CurrentUserOrAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticatedOrReadOnly,
@@ -45,7 +42,6 @@ from .utils import create_report_of_shopping_list
 from .pagination import PageLimitPagination
 
 
-
 class UserViewSet(DjoserViewSet.UserViewSet):
     """Общий вьюсет для пользователя."""
 
@@ -57,7 +53,6 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         ["get", "put", "patch", "delete"],
         detail=False,
     )
-
     def get_permissions(self):
         """
         Метод для управления правами доступа.
@@ -98,7 +93,6 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         return Response(
             {'avatar': str(image_url)}, status=status.HTTP_200_OK
         )
-
 
     @action(['GET'], detail=False, url_path='subscriptions')
     def subscriptions(self, request):
@@ -180,7 +174,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related('favorites', 'shopping_carts')
         return queryset
 
-    def get_permissions(self): 
+    def get_permissions(self):
         """Метод для прав доступа, в зависимости от метода."""
         if self.request.method in ("PATCH", "DELETE"):
             self.permission_classes = [IsAuthor]
@@ -235,7 +229,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         raise ValidationError(
                 {'errors': UNEXIST_RECIPE_CREATE_ERROR}
-            )
+        )
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):

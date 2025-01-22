@@ -2,7 +2,6 @@ import base64
 from datetime import datetime
 
 from django.core.files.base import ContentFile
-from django.http import FileResponse
 from rest_framework import serializers
 
 
