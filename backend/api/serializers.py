@@ -7,12 +7,11 @@ from rest_framework import serializers
 
 from recipes.constants import (
     AMOUNT_OF_INGREDIENT_CREATE_ERROR, AMOUNT_OF_TAG_CREATE_ERROR,
-    AMOUNT_ERROR_MESSAGE_MIN,
     AMOUNT_MIN, RECIPES_LIMIT
 )
 from recipes.models import (
     Ingredient, RecipeIngredients,
-    Tag, Recipe, User, Subscription
+    Tag, Recipe, User
 )
 from .utils import Base64ImageField
 

@@ -1,5 +1,3 @@
-import os
-
 from django.urls import reverse
 from django.db.models import Sum
 from django.core.exceptions import ValidationError
@@ -22,7 +20,7 @@ from recipes.constants import (
     UNEXIST_RECIPE_CREATE_ERROR, DUPLICATE_OF_RECIPE_ADD_CART,
     UNEXIST_SHOPPING_CART_ERROR,
     CHANGE_AVATAR_ERROR_MESSAGE, SUBSCRIBE_ERROR_MESSAGE,
-    SUBSCRIBE_DELETE_ERROR_MESSAGE, SUBSCRIBE_SELF_ERROR_MESSAGE
+    SUBSCRIBE_SELF_ERROR_MESSAGE
 
 )
 from .filters import RecipeFilter, IngredientFilter
@@ -116,7 +114,8 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, methods=('POST', 'DELETE'), url_path='subscribe', url_name='subscribe')
+    @action(detail=True, methods=('POST', 'DELETE'),
+            url_path='subscribe', url_name='subscribe')
     def subscribe(self, request, id):
         """Метод для управления подписками."""
         user = request.user
@@ -180,7 +179,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             queryset = queryset.prefetch_related('favorites', 'shopping_carts')
         return queryset
-    
+
     def get_permissions(self): 
         """Метод для прав доступа, в зависимости от метода."""
         if self.request.method in ("PATCH", "DELETE"):

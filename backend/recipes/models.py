@@ -1,15 +1,14 @@
 import os
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
-    MinValueValidator, MaxValueValidator, RegexValidator)
+    MinValueValidator, RegexValidator)
 from django.db import models
 
 from .constants import (
     TAG_NAME_MAX_LENGTH, INGREDIENT_NAME_MAX_LENGTH,
     INGREDIENT_UNIT_MAX_LENGTH, RECIPE_NAME_MAX_LENGTH,
-    COOKING_TIME_MIN_VALUE, COOKING_TIME_ERROR_MESSAGE,
+    COOKING_TIME_MIN_VALUE,
     AMOUNT_OF_INGREDIENT_MIN_VALUE,
-    AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE,
     EMAIL_MAX_LENGTH, FIO_MAX_FIELD_LENGTH
 )
 
