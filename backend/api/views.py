@@ -227,9 +227,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        raise ValidationError(
-                {'errors': UNEXIST_RECIPE_CREATE_ERROR}
-        )
+        raise ValidationError({'errors': UNEXIST_RECIPE_CREATE_ERROR})
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):

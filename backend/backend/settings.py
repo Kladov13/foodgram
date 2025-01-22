@@ -170,3 +170,5 @@ DJOSER = {
         'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     }
 }
+
+HOST = 'taski2.duckdns.org'

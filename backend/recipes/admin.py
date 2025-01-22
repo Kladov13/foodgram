@@ -12,6 +12,7 @@ class UserChangeForm(BaseUserChangeForm):
         model = User
         fields = '__all__'
 
+
 class RelatedObjectFilter(admin.SimpleListFilter):
     """
     Фильтр для проверки наличия связанных объектов.
@@ -159,7 +160,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
             thresholds = [10, 30, 60]  # Дефолтные пороги
 
         return [
-        (
+           (
             'fast', f'Быстрее {thresholds[0]} мин '
                     f'({qs.filter(cooking_time__lt=thresholds[0]).count()})'),
             (
@@ -260,7 +261,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
     @admin.display(description='Число рецептов')
     def recipe_count(self, obj):
-        """Показывает количество рецептов, в которых используется ингредиент."""
+        """Показывает количество рецептов, в которых используется ингредиент"""
         return obj.recipe_set.count()
 
 
