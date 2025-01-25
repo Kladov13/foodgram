@@ -26,5 +26,4 @@
 - ALLOWED_HOSTS - разрешенные хосты
 
 ## Автор 
-Данил Кладов
-https://github.com/Kladov13
+[Данил Кладов](https://github.com/Kladov13)
