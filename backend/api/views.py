@@ -217,7 +217,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def common_delete_from(self, model, user, pk):
         """
-        Общий метод для удаления рецепта из списка покупок или избранного. 
+        Общий метод для удаления рецепта из списка покупок или избранного.
         """
         obj = model.objects.filter(user=user, recipe_id=pk)
         # Удаляем объект, если он существует

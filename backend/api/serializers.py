@@ -153,8 +153,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         """Метод для поиска дублей в списке и генерации ошибки."""
         # Считаем количество повторений, используя идентификаторы объектов
         item_ids = [item.id for item in items]
-        duplicates = [item_id for item_id, count in Counter(item_ids).items() if count > 1]
-        
+        duplicates = [item_id for item_id, count in Counter(
+            item_ids).items() if count > 1]
         # Возвращаем или генерируем ошибку, если есть дубли
         if duplicates:
             raise serializers.ValidationError(

@@ -4,6 +4,10 @@ from datetime import datetime
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
+from recipes.constants import (
+    INGREDIENT_FORMAT, SHOPPING_LIST_HEADER
+)
+
 
 class Base64ImageField(serializers.ImageField):
     """Кастомный класс для расширения стандартного ImageField."""
@@ -17,15 +21,13 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-SHOPPING_LIST_HEADER = 'Список покупок для: {0}\n\nДата: {1:%Y-%m-%d}\n\n'
-INGREDIENT_FORMAT = '{0}. {1} ({2}) - {3}'
-
 def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
 
     today = datetime.today()
     # Формирование заголовка
-    shopping_list_header = SHOPPING_LIST_HEADER.format(user.get_full_name(), today)
+    shopping_list_header = SHOPPING_LIST_HEADER.format(
+        user.get_full_name(), today)
     # Формирование списка ингредиентов
     shopping_list_ingredients = '\n'.join(
         INGREDIENT_FORMAT.format(

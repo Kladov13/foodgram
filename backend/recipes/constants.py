@@ -8,7 +8,7 @@ SUBSCRIBE_ERROR_MESSAGE = 'Вы уже подписаны на этого авт
 # Константа для ошибки, если подписка уже существует.
 SUBSCRIBE_SELF_ERROR_MESSAGE = 'Нельзя подписаться на самого себя.'
 # Константа для значения по-умолчанию лимита рецептов.
-RECIPES_LIMIT = 10*1000000
+RECIPES_LIMIT = 10 * 1000000
 # Константа для длины поля модели Tag.
 TAG_NAME_MAX_LENGTH = 32
 # Константа для длины поля названия модели Ingredient.
@@ -72,3 +72,5 @@ EMAIL_MAX_LENGTH = 254
 AMOUNT_ERROR_MESSAGE_MIN = (
     "Количество ингредиента не может быть меньше {AMOUNT_MIN}."
 )
+SHOPPING_LIST_HEADER = 'Список покупок для: {0}\n\nДата: {1:%Y-%m-%d}\n\n'
+INGREDIENT_FORMAT = '{0}. {1} ({2}) - {3}'
