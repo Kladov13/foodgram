@@ -17,24 +17,29 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
+SHOPPING_LIST_HEADER = 'Список покупок для: {0}\n\nДата: {1:%Y-%m-%d}\n\n'
+INGREDIENT_FORMAT = '{0}. {1} ({2}) - {3}'
+
 def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
 
     today = datetime.today()
-    shopping_list_header = (
-        'Список покупок для: {0}\n\n'
-        'Дата: {1:%Y-%m-%d}\n\n'.format(user.get_full_name(), today)
-    )
+    
+    # Формирование заголовка
+    shopping_list_header = SHOPPING_LIST_HEADER.format(user.get_full_name(), today)
+    
+    # Формирование списка ингредиентов
     shopping_list_ingredients = '\n'.join(
-        '{0}. {1} ({2}) - {3}'.format(
-            i, ingredient["ingredient__name"].capitalize(),
-            ingredient["ingredient__measurement_unit"], ingredient["amount"])
+        INGREDIENT_FORMAT.format(i, ingredient["ingredient__name"].capitalize(),
+                                 ingredient["ingredient__measurement_unit"], ingredient["amount"])
         for i, ingredient in enumerate(ingredients, start=1)
     )
-    shopping_list_recipes = '\n'.join(
-        '{0}'.format(recipe.name) for recipe in recipes
-    )
-    shopping_list = '\n'.join([  # Перенос формирования отчета в вызывающий код
+    
+    # Формирование списка рецептов
+    shopping_list_recipes = '\n'.join(recipe.name for recipe in recipes)
+
+    # Возвращаем сформированный список покупок
+    return '\n'.join([
         shopping_list_header,
         'Продукты:',
         shopping_list_ingredients,
@@ -42,4 +47,3 @@ def create_report_of_shopping_list(user, ingredients, recipes):
         shopping_list_recipes,
         '\n\nFoodgram'
     ])
-    return shopping_list

@@ -32,10 +32,11 @@ class BaseUserSerializer(DjoserUserSerializer):
         read_only_fields = ('id', 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
+        """Определяет, подписан ли текущий пользователь на указанного автора."""
         request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return request.user.followers.filter(author=obj).exists()
+        return (request is not None and not request.user.is_anonymous
+                and request.user.followers.filter(author=obj).exists())
+
 
 
 class AvatarSerializer(serializers.Serializer):
@@ -72,15 +73,11 @@ class SubscriberReadSerializer(BaseUserSerializer):
         :param obj: объект указанного пользователя.
         :return: сериализованный список рецептов.
         """
-        try:
-            recipes = recipe.recipes.all()
-            recipes_limit = int(self.context.get(
-                'request').GET.get('recipes_limit', RECIPES_LIMIT))
-            return RecipeShortSerializer(
-                recipes[:recipes_limit], many=True).data
-        except AttributeError:
-            return RecipeShortSerializer(
-                recipe.recipes.all()[:RECIPES_LIMIT], many=True).data
+        recipes = recipe.recipes.all()
+        recipes_limit = int(
+            self.context['request'].GET.get('recipes_limit', RECIPES_LIMIT)
+        )
+        return RecipeShortSerializer(recipes[:recipes_limit], many=True).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -155,15 +152,14 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def find_duplicates(self, items, item_name):
         """Метод для поиска дублей в списке и генерации ошибки."""
-        # Считаем количество повторений
-        item_ids = [item.get('id') if isinstance(
-            item, dict) else item for item in items]
-        duplicates = [item for item, count in Counter(
-            item_ids).items() if count > 1]
-
+        # Считаем количество повторений, используя идентификаторы объектов
+        item_ids = [item.id for item in items]
+        duplicates = [item_id for item_id, count in Counter(item_ids).items() if count > 1]
+        
+        # Возвращаем или генерируем ошибку, если есть дубли
         if duplicates:
             raise serializers.ValidationError(
-                f"{item_name} {duplicates} дубликаты."
+                f"Дублирующиеся {item_name}: {duplicates}"
             )
 
     def validate(self, attrs):
@@ -218,13 +214,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         })
         return recipe
 
-    def get_is_favorited(self, favorite):
+    def get_is_favorited(self, favorites):
         request = self.context.get('request')
-        return request.user.is_authenticated and favorite.favorites.filter(
+        return request.user.is_authenticated and favorites.favorites.filter(
             user=request.user).exists()
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return obj.shopping_carts.filter(user=request.user).exists()
+            return obj.shoppingcarts.filter(user=request.user).exists()
         return False

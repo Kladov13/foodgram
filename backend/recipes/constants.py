@@ -8,15 +8,13 @@ SUBSCRIBE_ERROR_MESSAGE = 'Вы уже подписаны на этого авт
 # Константа для ошибки, если подписка уже существует.
 SUBSCRIBE_SELF_ERROR_MESSAGE = 'Нельзя подписаться на самого себя.'
 # Константа для значения по-умолчанию лимита рецептов.
-RECIPES_LIMIT = 10
+RECIPES_LIMIT = 10*1000000
 # Константа для длины поля модели Tag.
 TAG_NAME_MAX_LENGTH = 32
 # Константа для длины поля названия модели Ingredient.
 INGREDIENT_NAME_MAX_LENGTH = 128
 # Константа для длины поля единицы измерения модели Ingredient.
 INGREDIENT_UNIT_MAX_LENGTH = 64
-# Константа для длины короткой ссылки модели Recipe.
-MAX_LENGTH_SHORT_LINK = 6
 # Константа для длины поля названия модели Recipe.
 RECIPE_NAME_MAX_LENGTH = 256
 # Константа для минимального времени приготовления.
@@ -25,11 +23,11 @@ COOKING_TIME_MIN_VALUE = 1
 COOKING_TIME_ERROR_MESSAGE = (
     f'Время приготовления не может быть меньше {COOKING_TIME_MIN_VALUE} минуты'
 )
-# Константа для минимального кол-ва ингредиентов в рецепте.
-AMOUNT_OF_INGREDIENT_MIN_VALUE = 1
+# Валидации для количества ингредиента
+AMOUNT_MIN = 1
 # Константа для текста ошибки минимального кол-ва ингредиентов в рецепте.
 AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR_MESSAGE = (
-    f'Кол-во ингредиентов не меньше {AMOUNT_OF_INGREDIENT_MIN_VALUE}.'
+    f'Кол-во ингредиентов не меньше {AMOUNT_MIN}.'
 )
 # Константа минимального кол-ва ингредиентов или тэгов в  рецепте при создании.
 AMOUNT_OF_INGREDIENT_CREATE_ERROR = (
@@ -49,7 +47,7 @@ DUPLICATE_OF_TAG_CREATE_ERROR = (
 )
 # Константа для избежания дублирования рецепта в списке покупок.
 DUPLICATE_OF_RECIPE_ADD_CART = (
-    'Данный рецепт уже добавлен в список покупок или избранное.'
+    '{recipes.name} уже добавлен в список покупок или избранное.'
 )
 # Константа для несуществующего рецепта.
 UNEXIST_RECIPE_CREATE_ERROR = (
@@ -62,7 +60,7 @@ UNEXIST_SHOPPING_CART_ERROR = (
 # Константа ддя ошибки отсутствия аватара.
 CHANGE_AVATAR_ERROR_MESSAGE = 'Изображение отсутствует.'
 # Константа для ошибки, если подписка уже существует.
-SUBSCRIBE_ERROR_MESSAGE = 'Вы уже подписаны на этого автора.'
+SUBSCRIBE_ERROR_MESSAGE = 'Вы уже подписаны на {author.username}.'
 # Константа для ошибки, если подписка уже существует.
 SUBSCRIBE_SELF_ERROR_MESSAGE = 'Нельзя подписаться на самого себя.'
 # Константа для ошибки удаления несуществующей подписки.
@@ -70,9 +68,7 @@ SUBSCRIBE_DELETE_ERROR_MESSAGE = (
     'Невозможно удалить несуществующую подписку.'
 )
 EMAIL_MAX_LENGTH = 254
-# Валидации для количества ингредиента
-AMOUNT_MIN = 1
-COUNT_OF_INGREDIENT_MIN = 1
+
 AMOUNT_ERROR_MESSAGE_MIN = (
-    "Количество ингредиента не может быть меньше {COUNT_OF_INGREDIENT_MIN}."
+    "Количество ингредиента не может быть меньше {AMOUNT_MIN}."
 )

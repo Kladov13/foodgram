@@ -40,7 +40,7 @@ class Command(BaseCommand):
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 count = Ingredient.objects.bulk_create(
-                    [Ingredient(**item) for item in json.load(file)],
+                    (Ingredient(**item) for item in json.load(file)),
                     ignore_conflicts=True
                 )
             self.stdout.write(self.style.SUCCESS(

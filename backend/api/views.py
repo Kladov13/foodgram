@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from djoser import views as DjoserViewSet
+from djoser import views as DjoserViewSets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -42,7 +42,7 @@ from .utils import create_report_of_shopping_list
 from .pagination import PageLimitPagination
 
 
-class UserViewSet(DjoserViewSet.UserViewSet):
+class UserViewSet(DjoserViewSets.UserViewSet):
     """Общий вьюсет для пользователя."""
 
     queryset = User.objects.all()
@@ -114,29 +114,30 @@ class UserViewSet(DjoserViewSet.UserViewSet):
         """Метод для управления подписками."""
         user = request.user
         author = get_object_or_404(User, id=id)
+
         # Проверка подписки на самого себя
         if user == author:
             raise ValidationError({'error': SUBSCRIBE_SELF_ERROR_MESSAGE})
 
-        subscription_exists = Subscription.objects.filter(
-            author=author, subscriber=user)
+        # Логика добавления подписки
         if request.method == 'POST':
+            subscription_exists = Subscription.objects.filter(
+                author=author, subscriber=user)
             if subscription_exists.exists():
-                return Response(
-                    {'error': 'Вы уже подписаны на этого автора.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                raise ValidationError(
+                    {'error': 'Вы уже подписаны на этого автора.'})
             # Создание новой подписки
             Subscription.objects.create(author=author, subscriber=user)
             serializer = SubscriberReadSerializer(
                 author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # Логика удаления подписки
-        if subscription_exists.exists():
-            subscription_exists.delete()
-            return HttpResponse(status=status.HTTP_204_NO_CONTENT)
 
-        raise ValidationError({'error': SUBSCRIBE_ERROR_MESSAGE})
+        # Логика удаления подписки
+        subscription_exists = get_object_or_404(
+            Subscription, author=author, subscriber=user)
+        subscription_exists.delete()
+        return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -171,7 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         if user.is_authenticated:
-            queryset = queryset.prefetch_related('favorites', 'shopping_carts')
+            queryset = queryset.prefetch_related('favorites', 'shoppingcarts')
         return queryset
 
     def get_permissions(self):
@@ -219,29 +220,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def common_delete_from(self, model, user, pk):
+        """ 
+        Общий метод для удаления рецепта из списка покупок или избранного. 
         """
-        Общий метод для удаления рецепта из списка покупок или избранного.
-        """
-        obj = model.objects.filter(user=user,
-                                   recipe=get_object_or_404(Recipe, id=pk))
-        if obj.exists():
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        raise ValidationError({'errors': UNEXIST_RECIPE_CREATE_ERROR})
+        obj = model.objects.filter(user=user, recipe_id=pk)
+        
+        # Удаляем объект, если он существует
+        get_object_or_404(obj).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):
         """Метод для скачивания списка покупок."""
         user = request.user
-        if not user.shopping_carts.exists():
+        if not user.shoppingcarts.exists():
             raise ValidationError({'error': UNEXIST_SHOPPING_CART_ERROR})
         ingredients = RecipeIngredients.objects.filter(
-            recipe__shopping_carts__user=user
+            recipe__shoppingcarts__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount')).order_by('ingredient__name')
-        recipes = Recipe.objects.filter(shopping_carts__user=user)
+        recipes = Recipe.objects.filter(shoppingcarts__user=user)
         shopping_list = create_report_of_shopping_list(
             user, ingredients, recipes)
         # Формирование имени файла

@@ -31,24 +31,18 @@ class Command(BaseCommand):
         file_path = kwargs['file_path']
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                data = json.load(file)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                tags = [Tag(**item) for item in json.load(f)['tags']]
+                created_tags = Tag.objects.bulk_create(
+                    tags, ignore_conflicts=True)
 
-            tags = [
-                Tag(
-                    name=item['name'],
-                    slug=item['slug']
-                )
-                for item in data['tags']
-            ]
-            Tag.objects.bulk_create(
-                tags,
-                ignore_conflicts=True
-            )
             self.stdout.write(
-                self.style.SUCCESS('Tеги успешно загружены.')
+                self.style.SUCCESS(
+                    f'Теги успешно загружены из файла: {file_path}. '
+                    f'Создано: {len(created_tags)}.')
             )
         except Exception as e:
             self.stderr.write(
-                self.style.ERROR(f'Ошибка при загрузке тегов: {e}')
+                self.style.ERROR(
+                    f'Ошибка при загрузке тегов из файла {file_path}: {e}')
             )

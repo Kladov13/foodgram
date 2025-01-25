@@ -8,7 +8,7 @@ from .constants import (
     TAG_NAME_MAX_LENGTH, INGREDIENT_NAME_MAX_LENGTH,
     INGREDIENT_UNIT_MAX_LENGTH, RECIPE_NAME_MAX_LENGTH,
     COOKING_TIME_MIN_VALUE,
-    AMOUNT_OF_INGREDIENT_MIN_VALUE,
+    AMOUNT_MIN,
     EMAIL_MAX_LENGTH, FIO_MAX_FIELD_LENGTH
 )
 
@@ -42,15 +42,6 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
-    def delete_avatar(self):
-        """Метод для удаления аватара пользователя."""
-        if self.avatar:
-            # Удаление файла с диска
-            if os.path.exists(self.avatar.path):
-                os.remove(self.avatar.path)
-            self.avatar = None
-            self.save()
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
@@ -64,11 +55,11 @@ class Subscription(models.Model):
     """Модель подписок."""
 
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='followers',
+        User, on_delete=models.CASCADE, related_name='author',
         verbose_name='Автор'
     )
     subscriber = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='followings',
+        User, on_delete=models.CASCADE, related_name='followers',
         verbose_name='Подписчик'
     )
 
@@ -142,7 +133,7 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient, through='RecipeIngredients',
-        verbose_name='Ингредиенты'
+        verbose_name='Продукты'
     )
     name = models.CharField(
         verbose_name='Наименование', max_length=RECIPE_NAME_MAX_LENGTH
@@ -186,7 +177,7 @@ class RecipeIngredients(models.Model):
         verbose_name='Мера',
         validators=[
             MinValueValidator(
-                AMOUNT_OF_INGREDIENT_MIN_VALUE,
+                AMOUNT_MIN,
             )
         ]
     )
@@ -204,7 +195,8 @@ class BaseUserRecipe(models.Model):
         User, on_delete=models.CASCADE, verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
+        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт',
+        related_name='%(class)ss'
     )
 
     class Meta:
@@ -212,10 +204,10 @@ class BaseUserRecipe(models.Model):
         # Уникальность пары (пользователь + рецепт)
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_user_recipe'
+                fields=['user', 'recipe'], name='unique_user_%(class)s'
             )
         ]
-        default_related_name = 'user_recipes'
+        default_related_name = '%(class)ss'
         verbose_name = 'Рецепт пользователя'
         verbose_name_plural = 'Рецепты пользователей'
 
@@ -227,12 +219,7 @@ class ShoppingCart(BaseUserRecipe):
     """Модель для списка покупок."""
 
     class Meta(BaseUserRecipe.Meta):
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_user_shopping_cart'
-            )
-        ]
-        default_related_name = 'shopping_carts'
+
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
 
@@ -241,11 +228,6 @@ class Favorite(BaseUserRecipe):
     """Модель для Избранных рецептов."""
 
     class Meta(BaseUserRecipe.Meta):
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_user_favorite'
-            )
-        ]
-        default_related_name = 'favorites'
+
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'

@@ -53,5 +53,5 @@ class RecipeFilter(filters.FilterSet):
             return recipes
 
         return recipes.filter(
-            shopping_carts__user=user) if value else recipes.exclude(
-                shopping_carts__user=user)
+            shoppingcarts__user=user) if value else recipes.exclude(
+                shoppingcarts__user=user)
