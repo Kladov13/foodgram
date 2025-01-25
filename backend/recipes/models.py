@@ -1,4 +1,3 @@
-import os
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MinValueValidator, RegexValidator)

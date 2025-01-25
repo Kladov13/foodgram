@@ -37,7 +37,6 @@ class RelatedObjectFilter(admin.SimpleListFilter):
         return queryset
 
 
-
 class HasRecipesFilter(RelatedObjectFilter):
     title = 'Есть рецепты'
     parameter_name = 'has_recipes'
@@ -133,7 +132,8 @@ class CookingTimeFilter(admin.SimpleListFilter):
         if times:
             min_time, max_time = min(times), max(times)
             bin_size = (max_time - min_time) // 3 or 1
-            self.thrs = [min_time + bin_size, min_time + 2 * bin_size, max_time]
+            self.thrs = [
+                min_time + bin_size, min_time + 2 * bin_size, max_time]
         else:
             self.thrs = [10, 30, 60]
 
@@ -176,22 +176,10 @@ class CookingTimeFilter(admin.SimpleListFilter):
             ),
         ]
 
-
     def queryset(self, request, queryset):
         thresholds = self.get_thresholds(request)
         if self.value():
             return self.filter_by_range(queryset, self.value(), thresholds)
-        return queryset
-
-    def filter_by_range(self, queryset, value, thresholds):
-        """Фильтрует queryset по значению и порогам через __range."""
-        if value == 'fast':
-            return queryset.filter(cooking_time__lt=thresholds[0])
-        if value == 'medium':
-            return queryset.filter(
-                cooking_time__range=(thresholds[0], thresholds[1]))
-        if value == 'long':
-            return queryset.filter(cooking_time__gt=thresholds[1])
         return queryset
 
 

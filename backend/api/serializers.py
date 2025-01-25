@@ -32,11 +32,10 @@ class BaseUserSerializer(DjoserUserSerializer):
         read_only_fields = ('id', 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        """Определяет, подписан ли текущий пользователь на указанного автора."""
+        """Определяет, подписан ли текущий пользователь на автора."""
         request = self.context.get('request')
         return (request is not None and not request.user.is_anonymous
                 and request.user.followers.filter(author=obj).exists())
-
 
 
 class AvatarSerializer(serializers.Serializer):

@@ -14,7 +14,7 @@ from rest_framework.permissions import (
 )
 
 from recipes.constants import (
-    UNEXIST_RECIPE_CREATE_ERROR, DUPLICATE_OF_RECIPE_ADD_CART,
+    DUPLICATE_OF_RECIPE_ADD_CART,
     UNEXIST_SHOPPING_CART_ERROR,
     CHANGE_AVATAR_ERROR_MESSAGE, SUBSCRIBE_ERROR_MESSAGE,
     SUBSCRIBE_SELF_ERROR_MESSAGE
@@ -114,30 +114,26 @@ class UserViewSet(DjoserViewSets.UserViewSet):
         """Метод для управления подписками."""
         user = request.user
         author = get_object_or_404(User, id=id)
-
         # Проверка подписки на самого себя
         if user == author:
             raise ValidationError({'error': SUBSCRIBE_SELF_ERROR_MESSAGE})
-
         # Логика добавления подписки
         if request.method == 'POST':
             subscription_exists = Subscription.objects.filter(
                 author=author, subscriber=user)
             if subscription_exists.exists():
                 raise ValidationError(
-                    {'error': 'Вы уже подписаны на этого автора.'})
+                    {'error': SUBSCRIBE_ERROR_MESSAGE})
             # Создание новой подписки
             Subscription.objects.create(author=author, subscriber=user)
             serializer = SubscriberReadSerializer(
                 author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         # Логика удаления подписки
         subscription_exists = get_object_or_404(
             Subscription, author=author, subscriber=user)
         subscription_exists.delete()
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
-
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -220,16 +216,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def common_delete_from(self, model, user, pk):
-        """ 
+        """
         Общий метод для удаления рецепта из списка покупок или избранного. 
         """
         obj = model.objects.filter(user=user, recipe_id=pk)
-        
         # Удаляем объект, если он существует
         get_object_or_404(obj).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):
