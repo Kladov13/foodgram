@@ -35,9 +35,8 @@ class BaseUserSerializer(DjoserUserSerializer):
         """Определяет, подписан ли текущий пользователь на автора."""
         request = self.context.get('request')
         return (
-            request and
-            not request.user.is_anonymous and
-            request.user.followers.filter(author=obj).exists()
+            request and not request.user.is_anonymous
+            and request.user.followers.filter(author=obj).exists()
         )
 
 

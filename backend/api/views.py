@@ -186,7 +186,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             raise ValidationError(
                 {'status':
                  f'Рецепт с ID {pk} не найден'})
-        short_link = request.build_absolute_uri(reverse('recipe-redirect', kwargs={'recipe_id': pk}))
+        short_link = request.build_absolute_uri(
+            reverse('recipe-redirect', kwargs={'recipe_id': pk}))
         return JsonResponse({'short-link': short_link})
 
     @action(detail=True, methods=['POST', 'DELETE'])

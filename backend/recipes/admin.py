@@ -59,7 +59,6 @@ class HasFollowersFilter(RelatedObjectFilter):
     related_field_name = 'followers'
 
 
-
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     # Список полей для отображения в списке пользователей
@@ -184,9 +183,9 @@ class RecipeAdmin(admin.ModelAdmin):
     @mark_safe
     def display_ingredients(self, ingredient):
         """Отображает ингредиенты в виде списка."""
-        ingredients = recipe.recipe_ingredients.all()
+        ingredients = ingredient.recipe_ingredients.all()
         return '<br>'.join(
-            f'{item.ingredient.name} — {item.amount} {item.ingredient.measurement_unit}' 
+            f'{item}'
             for item in ingredients)
 
     @admin.display(description='Картинка')
