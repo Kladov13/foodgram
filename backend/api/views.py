@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from djoser import views as DjoserViewSets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,8 +17,8 @@ from rest_framework.permissions import (
 from recipes.constants import (
     DUPLICATE_OF_RECIPE_ADD_CART,
     UNEXIST_SHOPPING_CART_ERROR,
-    CHANGE_AVATAR_ERROR_MESSAGE, SUBSCRIBE_ERROR_MESSAGE,
-    SUBSCRIBE_SELF_ERROR_MESSAGE
+    AVATAR_ERROR, SUBSCRIBE_ERROR,
+    SUBSCRIBE_SELF_ERROR
 
 )
 from .filters import RecipeFilter, IngredientFilter
@@ -81,7 +82,7 @@ class UserViewSet(DjoserViewSets.UserViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if 'avatar' not in request.data:
-            raise ValidationError({'error': CHANGE_AVATAR_ERROR_MESSAGE})
+            raise ValidationError({'error': AVATAR_ERROR})
 
         serializer = AvatarSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -116,23 +117,20 @@ class UserViewSet(DjoserViewSets.UserViewSet):
         author = get_object_or_404(User, id=id)
         # Проверка подписки на самого себя
         if user == author:
-            raise ValidationError({'error': SUBSCRIBE_SELF_ERROR_MESSAGE})
+            raise ValidationError({'error': SUBSCRIBE_SELF_ERROR})
         # Логика добавления подписки
         if request.method == 'POST':
-            subscription_exists = Subscription.objects.filter(
+            subscription, created = Subscription.objects.get_or_create(
                 author=author, subscriber=user)
-            if subscription_exists.exists():
-                raise ValidationError(
-                    {'error': SUBSCRIBE_ERROR_MESSAGE})
-            # Создание новой подписки
-            Subscription.objects.create(author=author, subscriber=user)
+            if not created:
+                raise ValidationError({'error': SUBSCRIBE_ERROR})
             serializer = SubscriberReadSerializer(
                 author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         # Логика удаления подписки
-        subscription_exists = get_object_or_404(
-            Subscription, author=author, subscriber=user)
-        subscription_exists.delete()
+        if request.method == 'DELETE':
+            get_object_or_404(
+                Subscription, author=author, subscriber=user).delete()
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -188,7 +186,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             raise ValidationError(
                 {'status':
                  f'Рецепт с ID {pk} не найден'})
-        short_link = f'{request.build_absolute_uri("/")[:-1]}/{str(pk)}/'
+        short_link = request.build_absolute_uri(reverse('recipe-redirect', kwargs={'recipe_id': pk}))
         return JsonResponse({'short-link': short_link})
 
     @action(detail=True, methods=['POST', 'DELETE'])
@@ -206,23 +204,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.common_delete_from(Favorite, request.user, pk)
 
     def common_add_to(self, model, user, pk):
-        """Общий метод для добавления рецепта в список покупок или избранное"""
+        """Общий метод для добавления рецепта в список"""
         recipe = get_object_or_404(Recipe, id=pk)
         obj, created = model.objects.get_or_create(
             user=user, recipe=get_object_or_404(Recipe, id=pk))
         if not created:
             raise ValidationError({'error': DUPLICATE_OF_RECIPE_ADD_CART})
-        serializer = RecipeShortSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            RecipeShortSerializer(recipe).data, status=status.HTTP_201_CREATED)
 
     def common_delete_from(self, model, user, pk):
         """
         Общий метод для удаления рецепта из списка покупок или избранного.
         """
-        obj = model.objects.filter(user=user, recipe_id=pk)
-        # Удаляем объект, если он существует
-        get_object_or_404(obj).delete()
-
+        get_object_or_404(model.objects.filter(
+            user=user, recipe_id=pk)).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'])

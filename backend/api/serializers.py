@@ -34,8 +34,11 @@ class BaseUserSerializer(DjoserUserSerializer):
     def get_is_subscribed(self, obj):
         """Определяет, подписан ли текущий пользователь на автора."""
         request = self.context.get('request')
-        return (request is not None and not request.user.is_anonymous
-                and request.user.followers.filter(author=obj).exists())
+        return (
+            request and
+            not request.user.is_anonymous and
+            request.user.followers.filter(author=obj).exists()
+        )
 
 
 class AvatarSerializer(serializers.Serializer):
@@ -72,11 +75,11 @@ class SubscriberReadSerializer(BaseUserSerializer):
         :param obj: объект указанного пользователя.
         :return: сериализованный список рецептов.
         """
-        recipes = recipe.recipes.all()
-        recipes_limit = int(
-            self.context['request'].GET.get('recipes_limit', RECIPES_LIMIT)
-        )
-        return RecipeShortSerializer(recipes[:recipes_limit], many=True).data
+        return RecipeShortSerializer(
+            recipe.recipes.all()[:int(self.context['request'].GET.get(
+                'recipes_limit', RECIPES_LIMIT))],
+            many=True
+        ).data
 
 
 class TagSerializer(serializers.ModelSerializer):

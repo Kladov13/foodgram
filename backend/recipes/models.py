@@ -6,7 +6,7 @@ from django.db import models
 from .constants import (
     TAG_NAME_MAX_LENGTH, INGREDIENT_NAME_MAX_LENGTH,
     INGREDIENT_UNIT_MAX_LENGTH, RECIPE_NAME_MAX_LENGTH,
-    COOKING_TIME_MIN_VALUE,
+    COOKING_TIME_MIN,
     AMOUNT_MIN,
     EMAIL_MAX_LENGTH, FIO_MAX_FIELD_LENGTH
 )
@@ -54,7 +54,7 @@ class Subscription(models.Model):
     """Модель подписок."""
 
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='author',
+        User, on_delete=models.CASCADE, related_name='authors',
         verbose_name='Автор'
     )
     subscriber = models.ForeignKey(
@@ -148,7 +148,7 @@ class Recipe(models.Model):
         verbose_name='Время приготовления (в минутах)',
         validators=[
             MinValueValidator(
-                COOKING_TIME_MIN_VALUE,
+                COOKING_TIME_MIN,
             )
         ]
     )
@@ -194,8 +194,7 @@ class BaseUserRecipe(models.Model):
         User, on_delete=models.CASCADE, verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт',
-        related_name='%(class)ss'
+        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
     )
 
     class Meta:
