@@ -169,8 +169,6 @@ class CookingTimeFilter(admin.SimpleListFilter):
             queryset, time_range) if time_range else queryset
 
 
-
-
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
