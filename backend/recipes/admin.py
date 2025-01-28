@@ -125,17 +125,22 @@ class CookingTimeFilter(admin.SimpleListFilter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Инициализация thresholds, если время готовки существует в базе
-        times = self.model.objects.all().values_list('cooking_time', flat=True)
-        if times:
-            min_time, max_time = min(times), max(times)
-            bin_size = (max_time - min_time) // 3 or 1
-            self.thresholds = [
-                min_time + bin_size, min_time + 2 * bin_size, max_time]
+        # Используем model_admin для получения модели
+        model_admin = kwargs.get('model_admin', None)
+        if model_admin:
+            model = model_admin.model
+            # Инициализация thresholds, если время готовки существует в базе
+            times = model.objects.all().values_list('cooking_time', flat=True)
+            if times:
+                min_time, max_time = min(times), max(times)
+                bin_size = (max_time - min_time) // 3 or 1
+                self.thresholds = [
+                    min_time + bin_size, min_time + 2 * bin_size, max_time
+                ]
 
     def lookups(self, request, model_admin):
         if not hasattr(self, 'thresholds'):
-            return []  # Если thresholds не инициализирован, не отображаем
+            return []  # Если thresholds не инициализирован, не отображаем фильтры
         thresholds = self.thresholds
         return [
             ('fast', f'Меньше {thresholds[0]} мин'),
@@ -150,18 +155,19 @@ class CookingTimeFilter(admin.SimpleListFilter):
         return queryset.filter(cooking_time__range=time_range)
 
     def queryset(self, request, queryset):
-        """Применяет фильтрацию по времени приготовления в зависимости от выбора."""
+        """Применяет фильтрацию по времени в зависимости от выбора."""
         if not hasattr(self, 'thresholds'):
             return queryset  # Если thresholds нет, просто возвращаем queryset
 
         value_to_range = {
-            'fast': self.thresholds[0],
-            'medium': self.thresholds[1],
-            'long': self.thresholds[2],
+            'fast': (0, self.thresholds[0]),
+            'medium': (self.thresholds[0], self.thresholds[1]),
+            'long': (self.thresholds[1], self.thresholds[2]),
         }
         time_range = value_to_range.get(self.value())
         return self.filter_by_range(
             queryset, time_range) if time_range else queryset
+
 
 
 
