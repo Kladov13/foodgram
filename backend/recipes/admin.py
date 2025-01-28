@@ -125,6 +125,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Инициализация thresholds, если время готовки существует в базе
         times = self.model.objects.all().values_list('cooking_time', flat=True)
         if times:
             min_time, max_time = min(times), max(times)
@@ -133,6 +134,8 @@ class CookingTimeFilter(admin.SimpleListFilter):
                 min_time + bin_size, min_time + 2 * bin_size, max_time]
 
     def lookups(self, request, model_admin):
+        if not hasattr(self, 'thresholds'):
+            return []  # Если thresholds не инициализирован, не отображаем
         thresholds = self.thresholds
         return [
             ('fast', f'Меньше {thresholds[0]} мин'),
@@ -141,20 +144,16 @@ class CookingTimeFilter(admin.SimpleListFilter):
         ]
 
     def filter_by_range(self, queryset, time_range):
-        """
-        Фильтрует queryset по переданному диапазону через __range.
-
-        Если передано одно число, интерпретирует его как верхнюю границу,
-        устанавливая нижнюю границу равной 0.
-        """
+        """Фильтрация по диапазону времени."""
         if isinstance(time_range, (int, float)):
             time_range = (0, time_range)
         return queryset.filter(cooking_time__range=time_range)
 
     def queryset(self, request, queryset):
-        """
-        Фильтрует queryset в зависимости от выбранного значения фильтра.
-        """
+        """Применяет фильтрацию по времени приготовления в зависимости от выбора."""
+        if not hasattr(self, 'thresholds'):
+            return queryset  # Если thresholds нет, просто возвращаем queryset
+
         value_to_range = {
             'fast': self.thresholds[0],
             'medium': self.thresholds[1],
