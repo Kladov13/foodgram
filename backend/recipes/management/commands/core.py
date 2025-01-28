@@ -9,7 +9,7 @@ class BaseLoadDataCommand(BaseCommand):
 
     @property
     def file_to(self):
-        return self.model.__name__.lower() + 's'
+        return self.model._meta.verbose_name_plural.lower()
 
     def add_arguments(self, parser):
         """Добавляет аргументы для команды."""
@@ -41,5 +41,4 @@ class BaseLoadDataCommand(BaseCommand):
         except Exception as e:
             self.stderr.write(
                 self.style.ERROR(
-                    f'Ошибка при загрузке {self.file_to} из "{file_path}": {e}')
-            )
+                    f'Ошибка загрузки {self.file_to} из "{file_path}": {e}'))

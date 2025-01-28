@@ -104,14 +104,6 @@ class UserAdmin(BaseUserAdmin):
     def recipe_count(self, user):
         return user.recipes.count()
 
-    @admin.display(description='Подписки')
-    def subscription_count(self, user):
-        return user.subscriptions.count()
-
-    @admin.display(description='Подписчики')
-    def follower_count(self, user):
-        return user.followers.count()
-
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredients
