@@ -1,16 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
+from django.contrib.auth.forms import UserChangeForm
 from django.utils.safestring import mark_safe
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
                      ShoppingCart, Tag, User)
-
-
-class UserChangeForm(BaseUserChangeForm):
-    class Meta:
-        model = User
-        fields = '__all__'
 
 
 class RelatedObjectFilter(admin.SimpleListFilter):
@@ -21,23 +15,24 @@ class RelatedObjectFilter(admin.SimpleListFilter):
 
     parameter_name = ''
     related_field_name = ''
+    LOOKUP_CHOICES = [
+        ('1', 'Есть'),
+        ('0', 'Нет'),
+    ]
+    FILTER_CONDITIONS = {
+        '1': {f'{related_field_name}__isnull': False},
+        '0': {f'{related_field_name}__isnull': True},
+    }
 
     def lookups(self, request, model_admin):
         # Определение возможных значений фильтра
-        return [
-            ('1', 'Есть'),
-            ('0', 'Нет'),
-        ]
+        return self.LOOKUP_CHOICES
 
     def queryset(self, request, queryset):
         # Условие фильтрации на основе текущего значения фильтра
-        filter_value = self.value()
-        if filter_value == '1':
-            return queryset.filter(**{
-                f'{self.related_field_name}__isnull': False}).distinct()
-        elif filter_value == '0':
-            return queryset.filter(**{
-                f'{self.related_field_name}__isnull': True}).distinct()
+        filter_conditions = self.FILTER_CONDITIONS.get(self.value())
+        if filter_conditions:
+            return queryset.filter(**filter_conditions).distinct()
         return queryset
 
 
@@ -103,7 +98,7 @@ class UserAdmin(BaseUserAdmin):
     def avatar(self, user):
         return (
             f'<img src="{user.avatar.url}" style="max-height: 50px; '
-            f'max-width: 50px;" />' if user.avatar else "")
+            f'max-width: 50px;" />' if user.avatar else '')
 
     @admin.display(description='Рецепты')
     def recipe_count(self, user):
@@ -140,23 +135,35 @@ class CookingTimeFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         thresholds = self.thresholds
         return [
-            ('fast', f'Меньше {thresholds[2][0]} мин'),
-            ('medium', f'От {thresholds[2][0]} до {thresholds[6][0]} мин'),
-            ('long', f'Больше {thresholds[6][0]} мин'),
+            ('fast', f'Меньше {thresholds[0]} мин'),
+            ('medium', f'От {thresholds[0]} до {thresholds[1]} мин'),
+            ('long', f'Больше {thresholds[1]} мин'),
         ]
 
     def filter_by_range(self, queryset, time_range):
-        """Фильтрует queryset по переданному диапазону через __range."""
+        """
+        Фильтрует queryset по переданному диапазону через __range.
+
+        Если передано одно число, интерпретирует его как верхнюю границу,
+        устанавливая нижнюю границу равной 0.
+        """
+        if isinstance(time_range, (int, float)):
+            time_range = (0, time_range)
         return queryset.filter(cooking_time__range=time_range)
 
     def queryset(self, request, queryset):
-        if self.value() == 'fast':
-            return self.filter_by_range(queryset, self.thresholds[0])
-        if self.value() == 'medium':
-            return self.filter_by_range(queryset, self.thresholds[1])
-        if self.value() == 'long':
-            return self.filter_by_range(queryset, self.thresholds[2])
-        return queryset
+        """
+        Фильтрует queryset в зависимости от выбранного значения фильтра.
+        """
+        value_to_range = {
+            'fast': self.thresholds[0],
+            'medium': self.thresholds[1],
+            'long': self.thresholds[2],
+        }
+        time_range = value_to_range.get(self.value())
+        return self.filter_by_range(
+            queryset, time_range) if time_range else queryset
+
 
 
 @admin.register(Recipe)
@@ -185,8 +192,10 @@ class RecipeAdmin(admin.ModelAdmin):
         """Отображает ингредиенты в виде списка."""
         ingredients = ingredient.recipe_ingredients.all()
         return '<br>'.join(
-            f'{item}'
-            for item in ingredients)
+            f'{item.ingredient.name} — {item.amount} '
+            f'{item.ingredient.measurement_unit}'
+            for item in ingredients
+        )
 
     @admin.display(description='Картинка')
     @mark_safe
@@ -200,30 +209,29 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='В избранном')
     def added_in_favorites(self, recipe):
         """Возвращает количество добавлений рецепта в избранное."""
-        return Favorite.objects.filter(recipe=recipe).count()
+        return recipe.favorites.count()
+
+
+class RecipeCountMixin:
+    """Миксин для подсчёта количества связанных рецептов."""
+
+    @admin.display(description='Рецепты')
+    def recipe_count(self, obj):
+        """Возвращает количество рецептов, связанных с объектом."""
+        return obj.recipes.count()
 
 
 @admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
+class IngredientAdmin(admin.ModelAdmin, RecipeCountMixin):
     list_display = ('name', 'measurement_unit', 'recipe_count')
     search_fields = ('name', 'measurement_unit')
     list_filter = ('measurement_unit',)
 
-    @admin.display(description='Рецепты')
-    def recipe_count(self, ingredient):
-        """Показывает количество рецептов, в которых используется ингредиент"""
-        return RecipeIngredients.objects.filter(ingredient=ingredient).count()
-
 
 @admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(admin.ModelAdmin, RecipeCountMixin):
     list_display = ('name', 'slug', 'recipe_count')
     search_fields = ('name', 'slug')
-
-    @admin.display(description='Рецепты')
-    def recipe_count(self, tag):
-        """Показывает количество рецептов, с этим тегом."""
-        return tag.recipe_set.count()
 
 
 @admin.register(ShoppingCart, Favorite)

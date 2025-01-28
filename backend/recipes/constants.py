@@ -1,7 +1,7 @@
 FIO_MAX_FIELD_LENGTH = 150
 AVATAR_ERROR = 'Изображение отсутствует.'
 SUBSCRIBE_SELF_ERROR = 'Нельзя подписаться на самого себя.'
-RECIPES_LIMIT = 10000000
+RECIPES_LIMIT = 10_000_000
 TAG_NAME_MAX_LENGTH = 32
 INGREDIENT_NAME_MAX_LENGTH = 128
 INGREDIENT_UNIT_MAX_LENGTH = 64
@@ -12,7 +12,7 @@ COOKING_TIME_ERROR = (
 )
 AMOUNT_MIN = 1
 AMOUNT_OF_INGREDIENT_MIN_VALUE_ERROR = (
-    f'Кол-во ингредиентов не меньше {AMOUNT_MIN}.'
+    f'Кол-во продуктов не меньше {AMOUNT_MIN}.'
 )
 AMOUNT_OF_INGREDIENT_CREATE_ERROR = (
     'Для создания рецепта необходим минимум 1 ингредиент'
@@ -27,10 +27,10 @@ DUPLICATE_OF_TAG_CREATE_ERROR = (
     'Тэги не должны повторяться в наборе рецепта.'
 )
 DUPLICATE_OF_RECIPE_ADD_CART = (
-    '{recipes} уже добавлен в выбранный список.'
+    '{recipe} уже добавлен в выбранный список.'
 )
 UNEXIST_RECIPE_CREATE_ERROR = (
-    '{recipes} не существует или удален.'
+    '{recipe} не существует или удален.'
 )
 UNEXIST_SHOPPING_CART_ERROR = (
     'Данный список рецептов не существует или удален.'

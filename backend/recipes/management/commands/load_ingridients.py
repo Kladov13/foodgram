@@ -11,8 +11,4 @@ from .core import BaseLoadDataCommand
 
 class Command(BaseLoadDataCommand):
     """Команда для загрузки ингредиентов из JSON-файла."""
-
-    help = 'Загрузка ингредиентов из JSON-файла'
-
-    def __init__(self):
-        super().__init__(Ingredient, 'ingredients')
+    model = Ingredient
