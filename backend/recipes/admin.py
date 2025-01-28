@@ -140,7 +140,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         if not hasattr(self, 'thresholds'):
-            return []  # Если thresholds не инициализирован, не отображаем фильтры
+            return [] 
         thresholds = self.thresholds
         return [
             ('fast', f'Меньше {thresholds[0]} мин'),
