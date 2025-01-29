@@ -152,15 +152,12 @@ class Recipe(models.Model):
             )
         ]
     )
-    created_at = models.DateTimeField(
-        verbose_name='Дата создания', auto_now_add=True
-    )
 
     class Meta:
         default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('-created_at',)
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
