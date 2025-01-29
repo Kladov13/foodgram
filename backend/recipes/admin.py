@@ -149,6 +149,8 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = (CookingTimeFilter, 'author', 'tags')
     search_fields = ('name', 'author__username', 'tags__name')
     inlines = [RecipeIngredientInline]
+    verbose_name = _('Рецепт')
+    verbose_name_plural = _('Рецепты')
 
     @admin.display(description=_('Теги'))
     def tags_display(self, obj):
