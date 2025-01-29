@@ -140,7 +140,6 @@ class RecipeIngredientInline(admin.TabularInline):
     min_num = 1
     verbose_name = _('Продукт')
     verbose_name_plural = _('Продукты')
-    readonly_fields = ('get_measurement_unit',)
     fields = ('ingredient', 'measurement_unit', 'amount')
 
 
