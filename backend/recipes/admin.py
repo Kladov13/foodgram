@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserChangeForm
 from django.utils.safestring import mark_safe
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
-                     ShoppingCart, Tag, User, Subscription)
+                     ShoppingCart, Tag, User)
 
 
 class RelatedObjectFilter(admin.SimpleListFilter):
@@ -12,17 +12,17 @@ class RelatedObjectFilter(admin.SimpleListFilter):
     Фильтр для проверки наличия связанных объектов.
     Рецепты, подписки, подписчики.
     """
+
+    parameter_name = ''
+    related_field_name = ''
     LOOKUP_CHOICES = [
         ('1', 'Есть'),
         ('0', 'Нет'),
     ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.FILTER_CONDITIONS = {
-            '1': {f'{self.related_field_name}__isnull': False},
-            '0': {f'{self.related_field_name}__isnull': True},
-        }
+    FILTER_CONDITIONS = {
+        '1': {f'{related_field_name}__isnull': False},
+        '0': {f'{related_field_name}__isnull': True},
+    }
 
     def lookups(self, request, model_admin):
         # Определение возможных значений фильтра
@@ -45,7 +45,7 @@ class HasRecipesFilter(RelatedObjectFilter):
 class HasSubscriptionsFilter(RelatedObjectFilter):
     title = 'Есть подписки'
     parameter_name = 'has_subscriptions'
-    related_field_name = 'followers'
+    related_field_name = 'subscriptions'
 
 
 class HasFollowersFilter(RelatedObjectFilter):
@@ -59,11 +59,11 @@ class UserAdmin(BaseUserAdmin):
     # Список полей для отображения в списке пользователей
     list_display = (
         'username', 'email', 'full_name', 'avatar', 'recipe_count',
-        'subscription_count', 'follower_count'
+        'subscription_count', 'follower_count', 'is_staff', 'is_active'
     )
 
     # Фильтрация по полям
-    list_filter = (HasRecipesFilter,
+    list_filter = ('is_staff', 'is_active', HasRecipesFilter,
                    HasSubscriptionsFilter, HasFollowersFilter)
 
     # Поли для поиска
@@ -73,8 +73,8 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Permissions', {'fields': ('is_superuser',
-                                    'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -83,7 +83,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': ('username', 'password1', 'password2', 'email',
-                       'first_name', 'last_name'),
+                       'first_name', 'last_name', 'is_staff', 'is_active'),
         }),
     )
 
@@ -120,7 +120,7 @@ class RecipeIngredientInline(admin.TabularInline):
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
-    title = "Время (мин)"
+    title = "Время готовки"
     parameter_name = "cooking_time"
 
     def __init__(self, *args, **kwargs):
@@ -137,11 +137,6 @@ class CookingTimeFilter(admin.SimpleListFilter):
                 self.thresholds = [
                     min_time + bin_size, min_time + 2 * bin_size, max_time
                 ]
-                self.value_to_range = {
-                    'fast': (0, self.thresholds[0]),
-                    'medium': (self.thresholds[0], self.thresholds[1]),
-                    'long': (self.thresholds[1], self.thresholds[2]),
-                }
 
     def lookups(self, request, model_admin):
         if not hasattr(self, 'thresholds'):
@@ -155,13 +150,21 @@ class CookingTimeFilter(admin.SimpleListFilter):
 
     def filter_by_range(self, queryset, time_range):
         """Фильтрация по диапазону времени."""
+        if isinstance(time_range, (int, float)):
+            time_range = (0, time_range)
         return queryset.filter(cooking_time__range=time_range)
 
     def queryset(self, request, queryset):
         """Применяет фильтрацию по времени в зависимости от выбора."""
         if not hasattr(self, 'thresholds'):
             return queryset  # Если thresholds нет, просто возвращаем queryset
-        time_range = self.value_to_range.get(self.value())
+
+        value_to_range = {
+            'fast': (0, self.thresholds[0]),
+            'medium': (self.thresholds[0], self.thresholds[1]),
+            'long': (self.thresholds[1], self.thresholds[2]),
+        }
+        time_range = value_to_range.get(self.value())
         return self.filter_by_range(
             queryset, time_range) if time_range else queryset
 
@@ -184,16 +187,17 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='Теги')
     def display_tags(self, obj):
-        return ', '.join(tag.name for tag in obj.tags.all())
+        return '<br>'.join(tag.name for tag in obj.tags.all())
 
     @admin.display(description='Продукты')
     @mark_safe
     def display_ingredients(self, ingredient):
         """Отображает ингредиенты в виде списка."""
+        ingredients = ingredient.recipe_ingredients.all()
         return '<br>'.join(
-            f'{item.ingredient.name} — {item.ingredient.amount}'
+            f'{item.ingredient.name} — {item.amount} '
             f'{item.ingredient.measurement_unit}'
-            for item in ingredient.recipe_ingredients.all()
+            for item in ingredients
         )
 
     @admin.display(description='Картинка')
@@ -219,9 +223,6 @@ class RecipeCountMixin:
         """Возвращает количество рецептов, связанных с объектом."""
         return obj.recipes.count()
 
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('author', 'subscriber')
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin, RecipeCountMixin):
