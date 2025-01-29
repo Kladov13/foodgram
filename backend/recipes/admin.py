@@ -4,6 +4,8 @@ from django.contrib.auth.forms import UserChangeForm
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
+from django import forms
+from django.contrib.admin.widgets import AdminFileWidget
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
                      ShoppingCart, Tag, User, Subscription)
@@ -43,7 +45,7 @@ class HasRecipesFilter(RelatedObjectFilter):
 class HasSubscriptionsFilter(RelatedObjectFilter):
     title = _('Есть подписки')
     parameter_name = 'has_subscriptions'
-    related_field_name = 'authors'  # Убедитесь, что в модели User есть related_name для подписок
+    related_field_name = 'authors'
 
 
 class HasFollowersFilter(RelatedObjectFilter):
@@ -67,7 +69,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         (_('Персональная информация'), {'fields': (
-            'first_name', 'last_name', 'email', 'avatar'
+            'first_name', 'last_name', 'email', 'avatar_preview', 'avatar'
         )}),
         (_('Права'), {'fields': ('is_active', 'is_staff', 'is_superuser')}),
         (_('Важные даты'), {'fields': ('last_login', 'date_joined')}),
@@ -80,6 +82,14 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
     form = UserChangeForm
+
+    readonly_fields = ('avatar_preview',)
+
+    @admin.display(description=_('Текущий аватар'))
+    def avatar_preview(self, obj):
+        if obj.avatar:
+            return mark_safe(f'<img src="{obj.avatar.url}" style="max-height: 200px; max-width: 200px;" />')
+        return _("Аватар не установлен")
 
     @admin.display(description=_('ФИО'))
     def full_name(self, user):
@@ -102,6 +112,17 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description=_('Подписчики'))
     def follower_count(self, user):
         return user.authors.count()
+    
+class UserChangeForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = '__all__'
+        widgets = {
+            'avatar': AdminFileWidget(attrs={
+                'accept': 'image/*',
+                'class': 'previewable'
+            }),
+        }
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
