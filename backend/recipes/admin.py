@@ -138,6 +138,10 @@ class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredients
     extra = 1
     min_num = 1
+    verbose_name = _('Продукт')
+    verbose_name_plural = _('Продукты')
+    readonly_fields = ('get_measurement_unit',)
+    fields = ('ingredient', 'measurement_unit', 'amount')
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
@@ -180,7 +184,7 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description=_('Продукты'))
     def ingredients_list(self, obj):
         return ", ".join(
-            f"{ing.ingredient.name} ({ing.amount} {ing.ingredient.measurement_unit})"
+            f"{ing.ingredient.name} {ing.amount} {ing.ingredient.measurement_unit}"
             for ing in obj.recipe_ingredients.all()
         )
 
