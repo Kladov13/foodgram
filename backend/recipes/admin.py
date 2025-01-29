@@ -43,7 +43,7 @@ class HasRecipesFilter(RelatedObjectFilter):
 class HasSubscriptionsFilter(RelatedObjectFilter):
     title = _('Есть подписки')
     parameter_name = 'has_subscriptions'
-    related_field_name = 'subscriptions'  # Убедитесь, что в модели User есть related_name для подписок
+    related_field_name = 'authors'  # Убедитесь, что в модели User есть related_name для подписок
 
 
 class HasFollowersFilter(RelatedObjectFilter):
