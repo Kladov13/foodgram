@@ -85,12 +85,6 @@ class UserAdmin(BaseUserAdmin):
 
     readonly_fields = ('avatar_preview',)
 
-    @admin.display(description=_('Текущий аватар'))
-    def avatar_preview(self, obj):
-        if obj.avatar:
-            return mark_safe(f'<img src="{obj.avatar.url}" style="max-height: 200px; max-width: 200px;" />')
-        return _("Аватар не установлен")
-
     @admin.display(description=_('ФИО'))
     def full_name(self, user):
         return f'{user.first_name} {user.last_name}'
@@ -140,7 +134,12 @@ class RecipeIngredientInline(admin.TabularInline):
     min_num = 1
     verbose_name = _('Продукт')
     verbose_name_plural = _('Продукты')
-    fields = ('ingredient', 'measurement_unit', 'amount')
+    fields = ('ingredient', 'get_measurement_unit', 'amount')
+    readonly_fields = ('get_measurement_unit',)
+
+    @admin.display(description=_('Ед. изм.'))
+    def get_measurement_unit(self, obj):
+        return obj.ingredient.measurement_unit
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
