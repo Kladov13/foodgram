@@ -25,9 +25,14 @@ def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
 
     today = datetime.today()
+    month_names = [
+        "января", "февраля", "марта", "апреля", "мая", "июня",
+        "июля", "августа", "сентября", "октября", "ноября", "декабря"
+    ]
+    date = f"{today.day} {month_names[today.month - 1]} {today.year}"
     # Формирование заголовка
     shopping_list_header = SHOPPING_LIST_HEADER.format(
-        user.get_full_name(), today)
+        user.username, date)
     # Формирование списка ингредиентов
     shopping_list_ingredients = '\n'.join(
         INGREDIENT_FORMAT.format(
@@ -36,7 +41,10 @@ def create_report_of_shopping_list(user, ingredients, recipes):
         for i, ingredient in enumerate(ingredients, start=1)
     )
     # Формирование списка рецептов
-    shopping_list_recipes = '\n'.join(recipe.name for recipe in recipes)
+    shopping_list_recipes = '\n'.join(
+        f"{recipe.name} (автор: {recipe.author.username})"
+        for recipe in recipes
+    )
     # Возвращаем сформированный список покупок
     return '\n'.join([
         shopping_list_header,

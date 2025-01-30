@@ -41,5 +41,5 @@ SUBSCRIBE_DELETE_ERROR = (
     'Невозможно удалить несуществующую подписку.'
 )
 EMAIL_MAX_LENGTH = 254
-SHOPPING_LIST_HEADER = 'Список покупок для: {0} Дата: {1:%Y-%m-%d}\n'
+SHOPPING_LIST_HEADER = 'Список покупок для: {} Дата: {}\n'
 INGREDIENT_FORMAT = '{0}. {1} ({2}) - {3}'

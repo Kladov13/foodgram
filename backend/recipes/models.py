@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     MinValueValidator, RegexValidator)
 from django.db import models
+from django.urls import reverse
 
 from .constants import (
     TAG_NAME_MAX_LENGTH, INGREDIENT_NAME_MAX_LENGTH,
@@ -152,6 +153,10 @@ class Recipe(models.Model):
             )
         ]
     )
+
+    def get_absolute_url(self):
+        """Возвращает полный URL для просмотра рецепта."""
+        return reverse('recipe-detail', args=[self.id])
 
     class Meta:
         default_related_name = 'recipes'
