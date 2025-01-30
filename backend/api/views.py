@@ -99,7 +99,7 @@ class UserViewSet(DjoserViewSets.UserViewSet):
     def subscriptions(self, request):
         """Метод для управления подписками пользователя."""
         user = request.user
-        queryset = User.objects.filter(followers__subscriber=user)
+        queryset = User.objects.filter(authors__subscriber=user)
         pages = self.paginate_queryset(queryset)
         self.serializer_class = SubscriberReadSerializer
         serializer = self.get_serializer(
