@@ -126,13 +126,14 @@ class UserChangeForm(forms.ModelForm):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('subscriber', 'author')
+    list_display = ('author', 'subscriber')
     search_fields = (
         'subscriber__username',
         'author__username',
         'subscriber__email',
         'author__email'
     )
+    list_filter = ('author', 'subscriber')
 
 
 class RecipeIngredientInline(admin.TabularInline):
