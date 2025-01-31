@@ -143,16 +143,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-from rest_framework.generics import RetrieveAPIView
-
-class RecipeDetailView(RetrieveAPIView):
-    """Представление для просмотра деталей рецепта."""
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для Ингредиентов."""
-
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = [IngredientFilter, ]

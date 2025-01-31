@@ -20,7 +20,5 @@ api.register('users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
-    path('', include(api.urls)),
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('', include(api.urls))
 ]
