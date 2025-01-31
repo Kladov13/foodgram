@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from djoser import views as DjoserViewSets
 from rest_framework.decorators import action
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.permissions import (
@@ -141,6 +142,12 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     permission_classes = [AllowAny]
     pagination_class = None
+
+
+class RecipeDetailView(RetrieveAPIView):
+    """Представление для просмотра деталей рецепта."""
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

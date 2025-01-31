@@ -13,6 +13,7 @@ from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
 # Убираем стандартные модели
 admin.site.unregister(Group)
 
+
 class RelatedObjectFilter(admin.SimpleListFilter):
     """
     Фильтр для проверки наличия связанных объектов.
@@ -30,9 +31,11 @@ class RelatedObjectFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == '1':
-            return queryset.filter(**{f'{self.related_field_name}__isnull': False}).distinct()
+            return queryset.filter(**{
+                f'{self.related_field_name}__isnull': False}).distinct()
         if self.value() == '0':
-            return queryset.filter(**{f'{self.related_field_name}__isnull': True}).distinct()
+            return queryset.filter(**{
+                f'{self.related_field_name}__isnull': True}).distinct()
         return queryset
 
 
@@ -92,7 +95,8 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description=_('Аватар'))
     def avatar_preview(self, user):
         if user.avatar:
-            return mark_safe(f'<img src="{user.avatar.url}" style="max-height: 50px; max-width: 50px;" />')
+            return mark_safe(f'<img src="{user.avatar.url}" '
+                             f'style="max-height: 50px; max-width: 50px;" />')
         return _("Нет аватара")
 
     @admin.display(description=_('Рецепты'))
@@ -106,7 +110,8 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description=_('Подписчики'))
     def follower_count(self, user):
         return user.authors.count()
-    
+
+
 class UserChangeForm(forms.ModelForm):
     class Meta:
         model = User
@@ -118,6 +123,7 @@ class UserChangeForm(forms.ModelForm):
             }),
         }
 
+
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('subscriber', 'author')
@@ -127,6 +133,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'subscriber__email',
         'author__email'
     )
+
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredients
@@ -167,7 +174,8 @@ class CookingTimeFilter(admin.SimpleListFilter):
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'name', 'author', 'cooking_time_display',
-        'tags_display', 'added_in_favorites', 'ingredients_list', 'image_preview'
+        'tags_display', 'added_in_favorites',
+        'ingredients_list', 'image_preview'
     )
     list_filter = (CookingTimeFilter, 'author', 'tags')
     search_fields = ('name', 'author__username', 'tags__name')
@@ -182,14 +190,16 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description=_('Продукты'))
     def ingredients_list(self, obj):
         return ", ".join(
-            f"{ing.ingredient.name} {ing.amount} {ing.ingredient.measurement_unit}"
+            f'{ing.ingredient.name} {ing.amount} '
+            f'{ing.ingredient.measurement_unit}'
             for ing in obj.recipe_ingredients.all()
         )
 
     @admin.display(description=_('Изображение'))
     def image_preview(self, obj):
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 50px;" />')
+            return mark_safe(
+                f'<img src="{obj.image.url}" style="max-height: 50px;" />')
         return _("Нет изображения")
 
     @admin.display(description=_('В избранном'))
