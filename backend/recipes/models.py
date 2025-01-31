@@ -162,7 +162,7 @@ class Recipe(models.Model):
         default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('name',)
+        ordering = ('-id',)
 
     def __str__(self):
         return self.name

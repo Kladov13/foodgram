@@ -12,7 +12,6 @@ class BaseLoadDataCommand(BaseCommand):
         return self.model._meta.verbose_name_plural.lower()
 
     def add_arguments(self, parser):
-        """Добавляет аргументы для команды."""
         parser.add_argument(
             'file_path',
             type=str,
@@ -24,20 +23,20 @@ class BaseLoadDataCommand(BaseCommand):
         return f'Загрузка {self.file_to} из JSON-файла'
 
     def handle(self, *args, **kwargs):
-        """Обрабатывает выполнение команды."""
         file_path = kwargs['file_path']
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
-                items_data = data if isinstance(data, list) else data.get(
-                    self.file_to, [])
-                items = [self.model(**item) for item in items_data]
+                try:
+                    data = data[self.file_to]
+                except (TypeError):
+                    data = data
                 created_objects = self.model.objects.bulk_create(
-                    items, ignore_conflicts=True)
+                    [self.model(**item) for item in data],
+                    ignore_conflicts=True)
                 self.stdout.write(self.style.SUCCESS(
                     f'{self.file_to.capitalize()} загружены. '
-                    f'Добавлено {len(created_objects)}'
-                ))
+                    f'Добавлено {len(created_objects)}'))
         except Exception as e:
             self.stderr.write(
                 self.style.ERROR(
