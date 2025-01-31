@@ -25,7 +25,7 @@ class RelatedObjectFilter(admin.SimpleListFilter):
         ('1', _('Есть')),
         ('0', _('Нет')),
     ]
-    
+
     def lookups(self, request, model_admin):
         return self.LOOKUP_CHOICES
 
@@ -60,7 +60,7 @@ class HasFollowersFilter(RelatedObjectFilter):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = (
-        'username', 'email', 'full_name', 'avatar_preview', 
+        'username', 'email', 'full_name', 'avatar_preview',
         'recipe_count', 'subscription_count', 'follower_count'
     )
     list_filter = (
