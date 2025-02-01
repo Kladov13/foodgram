@@ -112,18 +112,6 @@ class UserAdmin(BaseUserAdmin):
         return user.authors.count()
 
 
-class UserChangeForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = '__all__'
-        widgets = {
-            'avatar': AdminFileWidget(attrs={
-                'accept': 'image/*',
-                'class': 'previewable'
-            }),
-        }
-
-
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('author', 'subscriber')
@@ -190,7 +178,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description=_('Теги'))
     def tags_display(self, obj):
-        return ', '.join(tag.name for tag in obj.tags.all())
+        return '<br>'.join(tag.name for tag in obj.tags.all())
 
     @admin.display(description=_('Продукты'))
     def ingredients_list(self, obj):
@@ -204,7 +192,7 @@ class RecipeAdmin(admin.ModelAdmin):
         if obj.image:
             return mark_safe(
                 f'<img src="{obj.image.url}" style="max-height: 50px;" />')
-        return _("Нет изображения")
+        return _('')
 
     @admin.display(description=_('В избранном'))
     def added_in_favorites(self, obj):
