@@ -26,18 +26,13 @@ class BaseLoadDataCommand(BaseCommand):
         file_path = kwargs['file_path']
         try:
             with open(file_path, 'r') as file:
-                data = json.load(file)
-                try:
-                    data = data[self.file_to]
-                except (TypeError):
-                    data = data
                 created_objects = self.model.objects.bulk_create(
-                    [self.model(**item) for item in data],
+                    [self.model(**item) for item in json.load(
+                        file).get(self.file_to, [])],
                     ignore_conflicts=True)
                 self.stdout.write(self.style.SUCCESS(
-                    f'{self.file_to.capitalize()} загружены. '
+                    f'{self.file_to} загружены. '
                     f'Добавлено {len(created_objects)}'))
         except Exception as e:
-            self.stderr.write(
-                self.style.ERROR(
+            self.stderr.write(self.style.ERROR(
                     f'Ошибка загрузки {self.file_to} из "{file_path}": {e}'))

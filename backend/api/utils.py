@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from recipes.constants import (
-    INGREDIENT_FORMAT, SHOPPING_LIST_HEADER
+    INGREDIENT_FORMAT, SHOPPING_LIST_HEADER, MONTH_NAMES
 )
 
 
@@ -25,11 +25,7 @@ def create_report_of_shopping_list(user, ingredients, recipes):
     """Функция для генерации отчета списка покупок для скачивания."""
 
     today = datetime.today()
-    month_names = [
-        "января", "февраля", "марта", "апреля", "мая", "июня",
-        "июля", "августа", "сентября", "октября", "ноября", "декабря"
-    ]
-    date = f"{today.day} {month_names[today.month - 1]} {today.year}"
+    date = f"{today.day} {MONTH_NAMES[today.month - 1]} {today.year}"
     # Формирование заголовка
     shopping_list_header = SHOPPING_LIST_HEADER.format(
         user.username, date)
