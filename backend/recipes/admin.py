@@ -155,10 +155,14 @@ class CookingTimeFilter(admin.SimpleListFilter):
     parameter_name = "cooking_time"
 
     def lookups(self, request, model_admin):
+        light = Recipe.objects.filter(cooking_time__lte=30).count()
+        medium = Recipe.objects.filter(
+            cooking_time__gt=30, cooking_time__lte=60).count()
+        though = Recipe.objects.filter(cooking_time__gt=60).count()
         return [
-            ('0-30', _('До 30 мин')),
-            ('30-60', _('30-60 мин')),
-            ('60+', _('Более 60 мин')),
+            ('0-30', f'До 30 мин ({light})'),
+            ('30-60', f'30-60 мин ({medium})'),
+            ('60+', f'Более 60 мин ({though})'),
         ]
 
     def queryset(self, request, queryset):
@@ -186,11 +190,11 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description=_('Теги'))
     def tags_display(self, obj):
-        return ", ".join(tag.name for tag in obj.tags.all())
+        return ', '.join(tag.name for tag in obj.tags.all())
 
     @admin.display(description=_('Продукты'))
     def ingredients_list(self, obj):
-        return ", ".join(
+        return mark_safe('<br/>').join(
             f'{ing.ingredient.name} {ing.amount} '
             f'{ing.ingredient.measurement_unit}'
             for ing in obj.recipe_ingredients.all()
