@@ -194,11 +194,10 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description=_('Продукты'))
     def ingredients_list(self, obj):
-        return mark_safe('<br/>').join(
-            f'{ing.ingredient.name} {ing.amount} '
-            f'{ing.ingredient.measurement_unit}'
-            for ing in obj.recipe_ingredients.all()
-        )
+        return mark_safe('<ul>' + ''.join(
+            f'<li>{ing.ingredient.name} {ing.amount} '
+            f'{ing.ingredient.measurement_unit}</li>'
+            for ing in obj.recipe_ingredients.all()) + '</ul>')
 
     @admin.display(description=_('Изображение'))
     def image_preview(self, obj):
