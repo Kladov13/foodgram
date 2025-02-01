@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.forms import UserChangeForm
+
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
-from django import forms
-from django.contrib.admin.widgets import AdminFileWidget
+
+
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
                      ShoppingCart, Tag, User, Subscription)
