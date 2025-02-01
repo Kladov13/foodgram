@@ -84,9 +84,6 @@ class UserAdmin(BaseUserAdmin):
                        'first_name', 'last_name', 'is_staff', 'is_active'),
         }),
     )
-    form = UserChangeForm
-
-    readonly_fields = ('avatar_preview',)
 
     @admin.display(description=_('ФИО'))
     def full_name(self, user):
