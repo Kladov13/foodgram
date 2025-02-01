@@ -1,11 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
-
-
 
 from .models import (Favorite, Ingredient, RecipeIngredients, Recipe,
                      ShoppingCart, Tag, User, Subscription)
@@ -22,8 +18,8 @@ class RelatedObjectFilter(admin.SimpleListFilter):
     parameter_name = ''
     related_field_name = ''
     LOOKUP_CHOICES = [
-        ('1', _('Есть')),
-        ('0', _('Нет')),
+        ('1', ('Есть')),
+        ('0', ('Нет')),
     ]
 
     def lookups(self, request, model_admin):
@@ -40,19 +36,19 @@ class RelatedObjectFilter(admin.SimpleListFilter):
 
 
 class HasRecipesFilter(RelatedObjectFilter):
-    title = _('Есть рецепты')
+    title = ('Есть рецепты')
     parameter_name = 'has_recipes'
     related_field_name = 'recipes'
 
 
 class HasSubscriptionsFilter(RelatedObjectFilter):
-    title = _('Есть подписки')
+    title = ('Есть подписки')
     parameter_name = 'has_subscriptions'
     related_field_name = 'authors'
 
 
 class HasFollowersFilter(RelatedObjectFilter):
-    title = _('Есть подписчики')
+    title = ('Есть подписчики')
     parameter_name = 'has_followers'
     related_field_name = 'followers'
 
@@ -71,11 +67,11 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('username', 'email')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        (_('Персональная информация'), {'fields': (
+        (('Персональная информация'), {'fields': (
             'first_name', 'last_name', 'email', 'avatar'
         )}),
-        (_('Права'), {'fields': ('is_active', 'is_staff', 'is_superuser')}),
-        (_('Важные даты'), {'fields': ('last_login', 'date_joined')}),
+        (('Права'), {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        (('Важные даты'), {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
@@ -85,26 +81,26 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    @admin.display(description=_('ФИО'))
+    @admin.display(description=('ФИО'))
     def full_name(self, user):
         return f'{user.first_name} {user.last_name}'
 
-    @admin.display(description=_('Аватар'))
+    @admin.display(description=('Аватар'))
     def avatar_preview(self, user):
         if user.avatar:
             return mark_safe(f'<img src="{user.avatar.url}" '
                              f'style="max-height: 50px; max-width: 50px;" />')
-        return _("Нет аватара")
+        return ("Нет аватара")
 
-    @admin.display(description=_('Рецепты'))
+    @admin.display(description=('Рецепты'))
     def recipe_count(self, user):
         return user.recipes.count()
 
-    @admin.display(description=_('Подписки'))
+    @admin.display(description=('Подписки'))
     def subscription_count(self, user):
         return user.followers.count()
 
-    @admin.display(description=_('Подписчики'))
+    @admin.display(description=('Подписчики'))
     def follower_count(self, user):
         return user.authors.count()
 
@@ -125,21 +121,22 @@ class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredients
     extra = 1
     min_num = 1
-    verbose_name = _('Продукт')
-    verbose_name_plural = _('Продукты')
+    verbose_name = ('Продукт')
+    verbose_name_plural = ('Продукты')
     fields = ('ingredient', 'get_measurement_unit', 'amount')
     readonly_fields = ('get_measurement_unit',)
 
-    @admin.display(description=_('Ед. изм.'))
+    @admin.display(description=('Ед. изм.'))
     def get_measurement_unit(self, obj):
         return obj.ingredient.measurement_unit
 
 
 class CookingTimeFilter(admin.SimpleListFilter):
-    title = _("Время (мин)")
+    title = ("Время (мин)")
     parameter_name = "cooking_time"
 
     def lookups(self, request, model_admin):
+        # Применяем одноразовые переменные для соблюдения PEP8
         light = Recipe.objects.filter(cooking_time__lte=30).count()
         medium = Recipe.objects.filter(
             cooking_time__gt=30, cooking_time__lte=60).count()
@@ -170,32 +167,32 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = (CookingTimeFilter, 'author', 'tags')
     search_fields = ('name', 'author__username', 'tags__name')
     inlines = [RecipeIngredientInline]
-    verbose_name = _('Рецепт')
-    verbose_name_plural = _('Рецепты')
+    verbose_name = ('Рецепт')
+    verbose_name_plural = ('Рецепты')
 
-    @admin.display(description=_('Теги'))
+    @admin.display(description=('Теги'))
     def tags_display(self, obj):
         return '<br>'.join(tag.name for tag in obj.tags.all())
 
-    @admin.display(description=_('Продукты'))
+    @admin.display(description=('Продукты'))
     def ingredients_list(self, obj):
         return mark_safe('<ul>' + ''.join(
             f'<li>{ing.ingredient.name} {ing.amount} '
             f'{ing.ingredient.measurement_unit}</li>'
             for ing in obj.recipe_ingredients.all()) + '</ul>')
 
-    @admin.display(description=_('Изображение'))
+    @admin.display(description=('Изображение'))
     def image_preview(self, obj):
         if obj.image:
             return mark_safe(
                 f'<img src="{obj.image.url}" style="max-height: 50px;" />')
-        return _('')
+        return ('')
 
-    @admin.display(description=_('В избранном'))
+    @admin.display(description=('В избранном'))
     def added_in_favorites(self, obj):
         return obj.favorites.count()
 
-    @admin.display(description=_('Время (мин)'))
+    @admin.display(description=('Время (мин)'))
     def cooking_time_display(self, obj):
         return obj.cooking_time
 
@@ -206,7 +203,7 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name', 'measurement_unit')
     list_filter = ('measurement_unit',)
 
-    @admin.display(description=_('Рецептов'))
+    @admin.display(description=('Рецептов'))
     def recipe_count(self, obj):
         return obj.recipes.count()
 
@@ -216,7 +213,7 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'recipe_count')
     search_fields = ('name', 'slug')
 
-    @admin.display(description=_('Рецептов'))
+    @admin.display(description=('Рецептов'))
     def recipe_count(self, obj):
         return obj.recipes.count()
 
