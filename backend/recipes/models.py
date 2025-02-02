@@ -157,7 +157,7 @@ class Recipe(models.Model):
 
     def get_absolute_url(self):
         """Возвращает полный URL для просмотра рецепта."""
-        return reverse('recipe-redirect', args=[self.id])
+        return reverse('recipe-detail', args=[self.id])
 
     class Meta:
         default_related_name = 'recipes'
