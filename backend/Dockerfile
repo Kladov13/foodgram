@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 
-
 # Открываем порт для приложения (если оно запускается на 8000)
 # EXPOSE 8000
 
