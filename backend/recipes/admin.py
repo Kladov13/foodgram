@@ -172,7 +172,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description=('Теги'))
     def tags_display(self, obj):
-        return '<br>'.join(tag.name for tag in obj.tags.all())
+        return mark_safe('<br>'.join(tag.name for tag in obj.tags.all()))
 
     @admin.display(description=('Продукты'))
     def ingredients_list(self, obj):
