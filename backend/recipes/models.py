@@ -160,7 +160,6 @@ class Recipe(models.Model):
         editable=False
     )
 
-
     def get_absolute_url(self):
         """Возвращает полный URL для просмотра рецепта."""
         return reverse('recipe-detail', args=[self.id])
