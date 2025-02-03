@@ -154,7 +154,7 @@ class Recipe(models.Model):
             )
         ]
     )
-
+    
     def get_absolute_url(self):
         """Возвращает полный URL для просмотра рецепта."""
         return reverse('recipe-detail', args=[self.id])
@@ -163,7 +163,7 @@ class Recipe(models.Model):
         default_related_name = 'recipes'
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('-id',)
+        ordering = ('-created_at',)
 
     def __str__(self):
         return self.name
