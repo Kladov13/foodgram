@@ -34,6 +34,6 @@ class BaseLoadDataCommand(BaseCommand):
                     f'{self.file_to} загружены. '
                     f'Добавлено {len(created_objects)}'))
         except Exception as e:
-            self.stderr.write(self.style.ERROR(
-                    f'Ошибка загрузки {self.file_to} из "{file_path}": {e}'
-                    ))
+            self.stderr.write(
+                self.style.ERROR(
+                    f'Ошибка загрузки {self.file_to} из "{file_path}": {e}'))
