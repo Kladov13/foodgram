@@ -19,7 +19,9 @@ services:
       - static:/app/static
       - media:/app/media
     command: >
-      sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py load_ingridients data/ingredients.json && python manage.py load_tags data/tags.json && gunicorn --bind 0.0.0.0:8000 backend.wsgi"
+      sh -c "python manage.py makemigrations && python manage.py makemigrations recipes
+      && python manage.py migrate && python manage.py migrate recipes
+      && python manage.py load_ingridients data/ingredients.json && python manage.py load_tags data/tags.json && gunicorn --bind 0.0.0.0:8000 backend.wsgi"
     depends_on:
       - db
 
